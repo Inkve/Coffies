@@ -24,16 +24,16 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build Debug and Release APKs
-        run: ./gradlew :Coffies:assembleDebug :Coffies:assembleRelease
+        run: ./gradlew assembleDebug assembleRelease
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: coffies-debug-apk
+          name: coffies-debug
           path: Coffies/build/outputs/apk/debug/*.apk
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: coffies-release-apk
+          name: coffies-release
           path: Coffies/build/outputs/apk/release/*.apk
