@@ -3,4 +3,14 @@
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
+    <string name="today">Сегодня</string>
+    <string name="current_cups_count">Выпито 3 чашки кофе</string>
+    <string name="current_caffeine_count">≈320 мг кофеина</string>
+    <string name="current_money_count">Потрачено 700₽</string>
+    <string name="current_mood">Отличное настроение</string>
+    <string name="add_coffee">☕ Добавить\nкофе</string>
+    <string name="day_mood">😉 Настроение\nдня</string>
+    <string name="recomendation">Рекомендации дня</string>
+    <string name="recomendation_1">💧 Не забывайте пить воду</string>
+    <string name="recomendation_2">🚫 Воздержитесь от кофе</string>
 </resources>
