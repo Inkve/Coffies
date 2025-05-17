@@ -39,13 +39,15 @@
 
                 <ImageView
                     android:id="@+id/coffeeCupIcon"
-                    android:layout_width="156dp"
-                    android:layout_height="227dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="210dp"
                     android:layout_below="@+id/todayText"
                     android:layout_centerHorizontal="true"
-                    android:layout_marginTop="5dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
                     android:importantForAccessibility="no"
-                    android:src="@drawable/coffee_cup_large" />
+                    android:src="@drawable/coffee_cup_large"
+                    android:scaleType="fitCenter"/>
 
                 <TextView
                     android:id="@+id/cupsText"
@@ -54,7 +56,7 @@
                     android:layout_below="@+id/coffeeCupIcon"
                     android:layout_centerHorizontal="true"
                     android:layout_marginTop="10dp"
-                    android:text="@string/current_cups_count"
+                    android:text="@string/no_data"
                     android:textColor="@color/black"
                     android:textSize="16sp" />
 
@@ -65,9 +67,10 @@
                     android:layout_below="@id/cupsText"
                     android:layout_centerHorizontal="true"
                     android:layout_marginTop="5dp"
-                    android:text="@string/current_caffeine_count"
+                    android:text="@string/no_data"
                     android:textColor="@color/black"
-                    android:textSize="16sp" />
+                    android:textSize="16sp"
+                    android:textAlignment="center"/>
 
 
                 <LinearLayout
@@ -97,9 +100,10 @@
                             android:layout_height="wrap_content"
                             android:layout_below="@+id/moneyIcon"
                             android:layout_centerHorizontal="true"
-                            android:text="@string/current_money_count"
+                            android:text="@string/no_data"
                             android:textColor="@color/black"
-                            android:textSize="16sp" />
+                            android:textSize="16sp"
+                            android:textAlignment="center"/>
                     </RelativeLayout>
 
                     <RelativeLayout
@@ -114,7 +118,7 @@
                             android:layout_centerHorizontal="true"
                             android:layout_marginTop="3dp"
                             android:importantForAccessibility="no"
-                            android:src="@drawable/mood_5" />
+                            android:src="@drawable/mood_3" />
 
                         <TextView
                             android:id="@+id/moodText"
@@ -122,9 +126,10 @@
                             android:layout_height="wrap_content"
                             android:layout_below="@+id/current_moodIcon"
                             android:layout_centerHorizontal="true"
-                            android:text="@string/current_mood"
+                            android:text="@string/no_data"
                             android:textColor="@color/black"
-                            android:textSize="16sp" />
+                            android:textSize="16sp"
+                            android:textAlignment="center"/>
                     </RelativeLayout>
                 </LinearLayout>
 
@@ -147,7 +152,8 @@
                     android:backgroundTint="@color/dark_beige"
                     android:text="@string/add_coffee"
                     android:textColor="@color/black"
-                    android:textSize="18sp" />
+                    android:textSize="18sp"
+                    android:id="@+id/addCoffeeButton"/>
 
                 <Button
                     style="?android:attr/buttonBarButtonStyle"
@@ -157,7 +163,8 @@
                     android:backgroundTint="@color/dark_beige"
                     android:text="@string/day_mood"
                     android:textColor="@color/black"
-                    android:textSize="18sp" />
+                    android:textSize="18sp"
+                    android:id="@+id/addMoodButton"/>
             </LinearLayout>
 
             <RelativeLayout
@@ -181,30 +188,13 @@
                     android:textColor="@color/black"
                     android:textSize="18sp" />
 
-                <TextView
-                    android:id="@+id/recommendationContent_1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <androidx.recyclerview.widget.RecyclerView
                     android:layout_below="@+id/recommendationTitle"
                     android:layout_alignParentStart="true"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="10dp"
-                    android:text="@string/recomendation_1"
-                    android:textColor="@color/black"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:id="@+id/recommendationContent_2"
-                    android:layout_width="wrap_content"
+                    android:id="@+id/recommendationsRecycler"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@+id/recommendationContent_1"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginStart="20dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginBottom="5dp"
-                    android:text="@string/recomendation_2"
-                    android:textColor="@color/black"
-                    android:textSize="16sp" />
+                    android:layout_margin="8dp" />
             </RelativeLayout>
         </LinearLayout>
     </ScrollView>

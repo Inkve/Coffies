@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_edit"
+        android:title="Редактировать"
+        android:icon="@drawable/ic_edit"
+        app:showAsAction="ifRoom|withText" />
+    <item
+        android:id="@+id/action_reset"
+        android:title="Сбросить настройки"
+        android:icon="@drawable/ic_reset"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_full_reset"
+        android:title="Полный сброс данных"
+        android:icon="@drawable/ic_delete"
+        app:showAsAction="never" />
+</menu>

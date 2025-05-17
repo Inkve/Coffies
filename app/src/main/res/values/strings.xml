@@ -13,4 +13,91 @@
     <string name="recomendation">Рекомендации дня</string>
     <string name="recomendation_1">💧 Не забывайте пить воду</string>
     <string name="recomendation_2">🚫 Воздержитесь от кофе</string>
+    <string name="add_coffee_label">Добавление кофе</string>
+    <string name="coffee_type">Вид кофе</string>
+    <string name="volume_ml">Объем, мл</string>
+    <string name="quantity">Количество, шт</string>
+    <string name="caffeine_mg">Кофеин, мг</string>
+    <string name="save">Записать</string>
+    <string name="saved">Данные сохранены</string>
+    <string name="cost">Стоимость, ₽</string>
+    <string name="time">Время</string>
+    <string name="date">Дата</string>
+    <string name="coffee_shop">Кофейня</string>
+    <string name="comment">Комментарий</string>
+    <string name="default_volume_ml">Стандартный объем, мл</string>
+    <string name="default_caffeine_mg_ml">Среднее значение мг кофеина в 1 мл напитка</string>
+    <string name="enter_coffee_type_name">Введите название типа кофе</string>
+    <string name="choose_coffee_type">Нажмите для выбора</string>
+    <string name="need_choose_coffee_type">Необходимо выбрать вид кофе</string>
+
+    <!--    -->
+    <string name="mood_select_label">Текущее настроение</string>
+    <string name="mood_1_desc">Ужасно</string>
+    <string name="mood_2_desc">Плохо</string>
+    <string name="mood_3_desc">Нормально</string>
+    <string name="mood_4_desc">Хорошо</string>
+    <string name="mood_5_desc">Отлично</string>
+    <string name="mood_1_short">Ужасно</string>
+    <string name="mood_2_short">Плохо</string>
+    <string name="mood_3_short">Нормально</string>
+    <string name="mood_4_short">Хорошо</string>
+    <string name="mood_5_short">Отлично</string>
+    <string name="mood_error_required">Выберите настроение</string>
+
+    <string name="mood_moment_group_label">Момент</string>
+    <string name="mood_moment_before">До / В момент</string>
+    <string name="mood_moment_after">После</string>
+    <string name="mood_moment_error_required">Выберите момент</string>
+    <string name="mood_linked_coffee_label">Связанный прием кофе</string>
+    <string name="mood_linked_coffee_choose">Выберите прием кофе</string>
+    <string name="mood_linked_coffee_error_required">Выберите прием кофе</string>
+    <string name="mood_time_error_required">Укажите время</string>
+    <string name="mood_date_error_required">Укажите дату</string>
+    <string name="mood_save_success">Настроение сохранено</string>
+    <string name="mood_select">Выбрать</string>
+    <string name="coffee_entry_short_format">%1$s • %2$d мл • %3$s %4$s</string>
+    <string name="field_required">Поле необходимо</string>
+    <string name="no_coffee_entries">Нет записей потребления</string>
+
+
+    <!--    -->
+
+    <string name="coffee_type_label">Вид кофе</string>
+    <string name="coffee_type_value">%1$s</string>
+
+    <string name="volume_label">Объем, мл</string>
+    <string name="volume_value">%1$d мл</string>
+
+    <string name="quantity_label">Количество, шт</string>
+    <string name="quantity_value">%1$d шт</string>
+
+    <string name="caffeine_label">Кофеин, мг</string>
+    <string name="caffeine_value">%1$.0f мг</string>
+
+    <string name="price_label">Стоимость</string>
+    <string name="price_value">%1$s</string>
+
+    <string name="date_label">Дата</string>
+    <string name="date_value">%1$s</string>
+
+    <string name="time_label">Время</string>
+    <string name="time_value">%1$s</string>
+
+    <string name="place_label">Кофейня</string>
+    <string name="place_value">%1$s</string>
+
+    <string name="comment_label">Комментарий</string>
+    <string name="comment_value">%1$s</string>
+
+    <string name="mood_before">Настроение До</string>
+    <string name="mood_after">Настроение После</string>
+    <string name="mood_unknown">Неизвестно</string>
+    <string name="open_mood">Открыть настроение</string>
+    <string name="no_data">Неизвестно</string>
+    <string name="mood_brief_template">%1$s\n%2$s %3$s</string>
+    <string name="linked_coffee_label">Связанный прием кофе</string>
+    <string name="linked_coffee_template">%1$s в %2$s</string>
+
+
 </resources>

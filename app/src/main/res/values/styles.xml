@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="CoffiesDialogTheme" parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="colorPrimary">@color/dark_beige</item>
+        <item name="colorOnPrimary">@color/brown</item>
+        <item name="colorSecondary">@color/dark_beige</item>
+    </style>
+
+    <style name="CoffiesCalendarPickerTheme" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
+        <item name="colorPrimary">@color/dark_beige</item>
+        <item name="colorOnPrimary">@color/brown</item>
+        <item name="colorSecondary">@color/dark_beige</item>
+    </style>
+</resources>

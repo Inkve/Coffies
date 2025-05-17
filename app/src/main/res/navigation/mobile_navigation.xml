@@ -9,7 +9,14 @@
         android:id="@+id/navigation_main"
         android:name="com.example.coffies.ui.main.MainFragment"
         android:label="Главная"
-        tools:layout="@layout/fragment_main" />
+        tools:layout="@layout/fragment_main">
+        <action
+            android:id="@+id/action_main_to_addCoffee"
+            app:destination="@id/addCoffeeEntryFragment" />
+        <action
+            android:id="@+id/action_main_to_addMood"
+            app:destination="@id/addMoodEntryFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_analytics"
@@ -21,11 +28,70 @@
         android:id="@+id/navigation_history"
         android:name="com.example.coffies.ui.history.HistoryFragment"
         android:label="История"
-        tools:layout="@layout/fragment_history" />
+        tools:layout="@layout/fragment_history">
+        <action
+            android:id="@+id/action_history_to_coffeeDetails"
+            app:destination="@id/coffeeDetailsFragment" />
+        <action
+            android:id="@+id/action_history_to_moodDetails"
+            app:destination="@id/moodDetailsFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_settings"
         android:name="com.example.coffies.ui.settings.SettingsFragment"
         android:label="Настройки"
         tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/addCoffeeEntryFragment"
+        android:name="com.example.coffies.ui.addcoffee.CoffeeInputFragment"
+        android:label="Добавление кофе">
+        <action
+        android:id="@+id/action_main_to_addTypeCoffee"
+        app:destination="@id/CoffeeTypeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/CoffeeTypeFragment"
+        android:name="com.example.coffies.ui.coffeetype.CoffeeTypeFragment"
+        android:label="Добавление вида кофе" />
+
+    <fragment
+        android:id="@+id/addMoodEntryFragment"
+        android:name="com.example.coffies.ui.addmood.MoodInputFragment"
+        android:label="Настроение дня" />
+
+    <fragment
+        android:id="@+id/coffeeDetailsFragment"
+        android:name="com.example.coffies.ui.coffeedetails.CoffeeDetailsFragment"
+        android:label="Детали кофе">
+
+        <argument
+            android:name="coffeeEntryId"
+            app:argType="integer" />
+
+        <action
+            android:id="@+id/action_coffeeDetails_to_addMood"
+            app:destination="@id/addMoodEntryFragment" />
+
+        <action
+            android:id="@+id/action_coffeeDetails_to_moodDetails"
+            app:destination="@id/moodDetailsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/moodDetailsFragment"
+        android:name="com.example.coffies.ui.mooddetails.MoodDetailsFragment"
+        android:label="Детали настроения">
+
+        <argument
+            android:name="moodEntryId"
+            app:argType="integer" />
+
+        <action
+            android:id="@+id/actionMoodDetailsToCoffeeDetails"
+            app:destination="@id/coffeeDetailsFragment" />
+    </fragment>
+
 </navigation>
