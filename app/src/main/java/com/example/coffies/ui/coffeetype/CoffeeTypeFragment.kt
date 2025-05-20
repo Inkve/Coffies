@@ -57,7 +57,7 @@ class CoffeeTypeFragment : Fragment() {
             if (caffeineStr.isEmpty()) {
                 binding.defaultCaffeineInput.error = "Введите кофеин (мг/мл)"
                 valid = false
-            } else if (caffeine == null || caffeine <= 0f) {
+            } else if (caffeine == null || caffeine < 0f) {
                 binding.defaultCaffeineInput.error = "Некорректное число"
                 valid = false
             } else {

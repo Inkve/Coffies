@@ -393,7 +393,7 @@
                         android:layout_height="70dp"
                         android:layout_marginTop="5dp"
                         android:background="@drawable/rounded_corners_white"
-                        android:inputType="textMultiLine"
+                        android:inputType="textMultiLine|textCapSentences"
                         android:maxLength="200"
                         android:paddingStart="12dp"
                         android:paddingEnd="12dp"
