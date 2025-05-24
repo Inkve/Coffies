@@ -1,81 +1,244 @@
 package com.example.coffies.ui.addmood
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.coffies.database.AppDatabase
 import com.example.coffies.database.coffeentry.CoffeeEntry
 import com.example.coffies.database.coffemoodlink.CoffeeMoodLink
 import com.example.coffies.database.moodentry.MoodEntry
-import com.example.coffies.database.coffeetype.CoffeeTypeIdName
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-class MoodInputViewModel(
-    private val db: AppDatabase
-) : ViewModel() {
+class MoodInputViewModel(private val db: AppDatabase) : ViewModel() {
 
-    // Получить последние приемы кофе (например, 20 штук)
-    val lastCoffeeEntriesFlow: Flow<List<CoffeeEntry>> =
-        db.coffeeEntryDao().getAllDescLimited(20)
+    private val _formState = MutableStateFlow(MoodInputFormState(momentType = MoodMomentType.BEFORE))
+    val formState: StateFlow<MoodInputFormState> = _formState.asStateFlow()
 
-    // Кэш для быстрых lookup названия типа кофе по id
-    private val coffeeTypeNameMap = mutableMapOf<Int, String>()
-
-    // Инициализация кэша типов кофе
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val types: List<CoffeeTypeIdName> = db.coffeeTypeDao().getAllCoffeeTypeNames()
-                val map = types.associate { it.id to it.name }
-                coffeeTypeNameMap.putAll(map)
-            } catch (e: Exception) {
-                // В случае ошибки пусть кэш останется пустым, можно добавить логирование
-            }
-        }
+        loadCoffeeTypeNames()
+        refreshCoffeeList()
     }
 
-    fun getCoffeeTypeName(id: Int): String {
-        return coffeeTypeNameMap[id] ?: "Тип $id"
-    }
-
-    // Сохранить запись настроения и связь с приемом кофе
-    fun saveMoodWithCoffeeLink(
-        moodLevel: Int,
-        date: String,
-        time: String,
-        comment: String?,
-        coffeeEntryId: Int,
-        relationType: String, // "before and during" or "after"
-        onSuccess: () -> Unit,
-        onError: (Exception) -> Unit
+    fun prefill(
+        relatedCoffeeId: Int?,
+        relatedCoffeeTime: String?,
+        relatedCoffeeDate: String?,
+        momentType: MoodMomentType?
     ) {
+        _formState.update { st ->
+            st.copy(
+                relatedCoffeeId = relatedCoffeeId,
+                relatedCoffeeTime = relatedCoffeeTime,
+                relatedCoffeeDate = relatedCoffeeDate,
+                momentType = momentType,
+                // Заполним дату и время, если есть
+                date = relatedCoffeeDate ?: "",
+                displayDate = relatedCoffeeDate?.split("-")?.reversed()?.joinToString(".") ?: "",
+                time = relatedCoffeeTime ?: ""
+            )
+        }
+        refreshCoffeeList()
+    }
+
+
+    private fun loadCoffeeTypeNames() {
         viewModelScope.launch {
-            try {
-                val moodEntry = MoodEntry(
-                    mood_level = moodLevel,
-                    date = date,
-                    time = time,
-                    comment = comment
-                )
-                val moodId = withContext(Dispatchers.IO) {
-                    db.moodEntryDao().insert(moodEntry).toInt()
+            val map = db.coffeeTypeDao().getAllCoffeeTypeNames().associate { it.id to it.name }
+            _formState.update { it.copy(coffeeTypeNameMap = map) }
+        }
+    }
+
+    fun onMoodSelected(level: Int) {
+        _formState.update { it.copy(moodLevel = level, moodError = null) }
+    }
+
+    fun onMomentSelected(moment: MoodMomentType?) {
+        _formState.update { st ->
+            val relatedTime = st.relatedCoffeeTime
+            val relatedDate = st.relatedCoffeeDate
+            var newTime = st.time
+            var newDate = st.date
+
+            if (moment != null && relatedTime != null && relatedDate != null) {
+                val cmp = "${st.date}T${st.time}".compareTo("$relatedDate" + "T" + relatedTime)
+                if (moment == MoodMomentType.BEFORE && cmp > 0) {
+                    newTime = relatedTime
+                    newDate = relatedDate
                 }
-                val link = CoffeeMoodLink(
-                    coffee_entry_id = coffeeEntryId,
-                    mood_entry_id = moodId,
-                    relation_type = relationType
-                )
-                withContext(Dispatchers.IO) {
-                    db.coffeeMoodLinkDao().insert(link)
+                if (moment == MoodMomentType.AFTER && cmp < 0) {
+                    val nowTime = java.time.LocalTime.now().toString().substring(0,5)
+                    newTime = nowTime
+                    newDate = relatedDate
                 }
-                onSuccess()
-            } catch (e: Exception) {
-                onError(e)
+            }
+            st.copy(
+                momentType = moment,
+                momentError = null,
+                time = newTime,
+                date = newDate,
+                displayDate = if (newDate.isNotEmpty()) newDate.split("-").reversed().joinToString(".") else ""
+            )
+        }
+        refreshCoffeeList()
+    }
+
+    fun onRelatedCoffeeSelected(entry: CoffeeEntry?) {
+        _formState.update { st ->
+            if (entry == null) return@update st.copy(
+                relatedCoffeeId = null,
+                relatedCoffeeError = null,
+                relatedCoffeeTime = null,
+                relatedCoffeeDate = null,
+                date = "",
+                displayDate = "",
+                time = ""
+            )
+            // При выборе — ставим дату и время приема кофе
+            val newDate = entry.date
+            val newTime = entry.time
+            st.copy(
+                relatedCoffeeId = entry.id,
+                relatedCoffeeError = null,
+                relatedCoffeeTime = entry.time,
+                relatedCoffeeDate = entry.date,
+                date = newDate,
+                displayDate = if (newDate.isNotEmpty()) newDate.split("-").reversed().joinToString(".") else "",
+                time = newTime
+            )
+        }
+    }
+
+    fun onDateChanged(display: String, iso: String) {
+        _formState.update { it.copy(date = iso, displayDate = display, dateError = null, timeError = null) }
+    }
+
+    fun onTimeChanged(value: String) {
+        _formState.update { it.copy(time = value, dateError = null, timeError = null) }
+    }
+
+    fun onCommentChanged(text: String) {
+        _formState.update { it.copy(comment = text) }
+    }
+
+    fun refreshCoffeeList() {
+        viewModelScope.launch {
+            val usedBefore = db.coffeeMoodLinkDao().getCoffeeEntryIdsByType(MoodMomentType.BEFORE.dbValue)
+            val usedAfter = db.coffeeMoodLinkDao().getCoffeeEntryIdsByType(MoodMomentType.AFTER.dbValue)
+            val coffeeList = db.coffeeEntryDao().getAllDescLimited(20).first()
+            val filter = _formState.value.momentType
+            val filtered = when (filter) {
+                MoodMomentType.BEFORE -> coffeeList.filter { it.id !in usedBefore }
+                MoodMomentType.AFTER -> coffeeList.filter { it.id !in usedAfter }
+                else -> coffeeList
+            }
+            // Проверяем, остался ли выбранный relatedCoffeeId в новом списке
+            val currentRelatedId = _formState.value.relatedCoffeeId
+            val isRelatedValid = currentRelatedId != null && filtered.any { it.id == currentRelatedId }
+            _formState.update {
+                it.copy(
+                    coffeeList = filtered,
+                    // если связанный прием больше не валиден — сбросить его
+                    relatedCoffeeId = if (isRelatedValid) currentRelatedId else null,
+                    relatedCoffeeTime = if (isRelatedValid) it.relatedCoffeeTime else null,
+                    relatedCoffeeDate = if (isRelatedValid) it.relatedCoffeeDate else null
+                )
             }
         }
+    }
+
+    fun submit() {
+        viewModelScope.launch {
+            val st = _formState.value
+            var valid = true
+            var moodError: String? = null
+            var momentError: String? = null
+            var relatedCoffeeError: String? = null
+            var dateError: String? = null
+            var timeError: String? = null
+
+            if (st.moodLevel !in 1..5) {
+                moodError = "Выберите настроение"
+                valid = false
+            }
+            if (st.momentType == null) {
+                momentError = "Выберите момент"
+                valid = false
+            }
+            if (st.relatedCoffeeId == null) {
+                relatedCoffeeError = "Свяжите с приемом кофе"
+                valid = false
+            }
+            if (st.date.isBlank()) {
+                dateError = "Выберите дату"
+                valid = false
+            }
+            if (st.time.isBlank()) {
+                timeError = "Выберите время"
+                valid = false
+            }
+            // Проверка на валидность времени по связи
+            if (st.momentType != null && st.relatedCoffeeTime != null && st.relatedCoffeeDate != null) {
+                val cmp = "${st.date}T${st.time}".compareTo("${st.relatedCoffeeDate}T${st.relatedCoffeeTime}")
+                if (st.momentType == MoodMomentType.BEFORE && cmp > 0) {
+                    timeError = "Дата/время должны быть не позже приёма кофе"
+                    valid = false
+                }
+                if (st.momentType == MoodMomentType.AFTER && cmp < 0) {
+                    timeError = "Дата/время должны быть не раньше приёма кофе"
+                    valid = false
+                }
+            }
+            // Будущие даты блокируем
+            val now = java.time.LocalDateTime.now()
+            val inputDT = try { java.time.LocalDateTime.parse("${st.date}T${st.time}") } catch (_: Exception) { null }
+            if (inputDT != null && inputDT > now) {
+                timeError = "Дата/время не могут быть из будущего"
+                valid = false
+            }
+
+            _formState.update {
+                it.copy(
+                    moodError = moodError,
+                    momentError = momentError,
+                    relatedCoffeeError = relatedCoffeeError,
+                    dateError = dateError,
+                    timeError = timeError
+                )
+            }
+
+            if (!valid) return@launch
+
+            try {
+                val moodId = db.moodEntryDao().insert(
+                    MoodEntry(
+                        mood_level = st.moodLevel,
+                        date = st.date,
+                        time = st.time,
+                        comment = st.comment.ifBlank { null }
+                    )
+                ).toInt()
+                db.coffeeMoodLinkDao().insert(
+                    CoffeeMoodLink(
+                        coffee_entry_id = st.relatedCoffeeId!!,
+                        mood_entry_id = moodId,
+                        relation_type = st.momentType!!.dbValue
+                    )
+                )
+                _formState.update { it.copy(success = true) }
+                resetForm()
+            } catch (e: Exception) {
+                // обработка ошибок по желанию
+            }
+        }
+    }
+
+    fun resetForm() {
+        _formState.value = MoodInputFormState(momentType = MoodMomentType.BEFORE)
+        loadCoffeeTypeNames()
+        refreshCoffeeList()
     }
 }

@@ -7,10 +7,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.example.coffies.database.AppDatabase
 import com.example.coffies.databinding.FragmentCoffeeTypeBinding
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 class CoffeeTypeFragment : Fragment() {
 
@@ -29,51 +33,35 @@ class CoffeeTypeFragment : Fragment() {
         _binding = FragmentCoffeeTypeBinding.inflate(inflater, container, false)
 
         binding.saveTypeButton.setOnClickListener {
-            val name = binding.nameInput.text.toString().trim()
-            val volStr = binding.defaultVolumeInput.text.toString().trim()
-            val caffeineStr = binding.defaultCaffeineInput.text.toString().trim()
-            val vol = volStr.toIntOrNull()
-            val caffeine = caffeineStr.toFloatOrNull()
+            viewModel.submit(
+                binding.nameInput.text.toString().trim(),
+                binding.defaultVolumeInput.text.toString().trim(),
+                binding.defaultCaffeineInput.text.toString().trim()
+            )
+        }
 
-            var valid = true
+        binding.nameInput.addTextChangedListener { viewModel.clearNameError() }
+        binding.defaultVolumeInput.addTextChangedListener { viewModel.clearVolumeError() }
+        binding.defaultCaffeineInput.addTextChangedListener { viewModel.clearCaffeineError() }
 
-            if (name.isEmpty()) {
-                binding.nameInput.error = getString(com.example.coffies.R.string.enter_coffee_type_name)
-                valid = false
-            } else {
-                binding.nameInput.error = null
-            }
+        lifecycleScope.launch {
+            viewModel.formState.collectLatest { state ->
+                binding.nameInput.error = state.nameError
+                binding.defaultVolumeInput.error = state.volumeError
+                binding.defaultCaffeineInput.error = state.caffeineError
 
-            if (volStr.isEmpty()) {
-                binding.defaultVolumeInput.error = "Введите объем"
-                valid = false
-            } else if (vol == null || vol <= 0) {
-                binding.defaultVolumeInput.error = "Некорректное число"
-                valid = false
-            } else {
-                binding.defaultVolumeInput.error = null
-            }
-
-            if (caffeineStr.isEmpty()) {
-                binding.defaultCaffeineInput.error = "Введите кофеин (мг/мл)"
-                valid = false
-            } else if (caffeine == null || caffeine < 0f) {
-                binding.defaultCaffeineInput.error = "Некорректное число"
-                valid = false
-            } else {
-                binding.defaultCaffeineInput.error = null
-            }
-
-            if (valid) {
-                viewModel.insertType(name, vol, caffeine) {
-                    binding.nameInput.text.clear()
-                    binding.defaultVolumeInput.text.clear()
-                    binding.defaultCaffeineInput.text.clear()
+                if (state.success) {
+                    // Очистка полей, скрытие клавиатуры и тост
+                    binding.nameInput.text?.clear()
+                    binding.defaultVolumeInput.text?.clear()
+                    binding.defaultCaffeineInput.text?.clear()
                     hideKeyboard()
                     Toast.makeText(requireContext(), com.example.coffies.R.string.saved, Toast.LENGTH_LONG).show()
+                    viewModel.clearSuccessFlag()
                 }
             }
         }
+
         return binding.root
     }
 

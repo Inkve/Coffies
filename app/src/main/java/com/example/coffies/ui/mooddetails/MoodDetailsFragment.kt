@@ -1,29 +1,33 @@
 package com.example.coffies.ui.mooddetails
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import androidx.core.os.bundleOf
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.coffies.R
 import com.example.coffies.database.AppDatabase
-import com.example.coffies.database.moodentry.MoodEntry
 import com.example.coffies.databinding.FragmentMoodDetailsBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.*
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class MoodDetailsFragment : Fragment() {
 
     private var _binding: FragmentMoodDetailsBinding? = null
     private val binding get() = _binding!!
-
     private val args: MoodDetailsFragmentArgs by navArgs()
+
+    private val viewModel: MoodDetailsViewModel by viewModels {
+        MoodDetailsViewModelFactory(AppDatabase.getInstance(requireContext()), args.moodEntryId)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,79 +38,70 @@ class MoodDetailsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val db = AppDatabase.getInstance(requireContext())
-
-        MainScope().launch {
-            val mood = withContext(Dispatchers.IO) {
-                db.moodEntryDao().getById(args.moodEntryId)
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.mood_details_menu, menu)
             }
-            mood?.let {
-                bindMood(it)
-
-                val linkedCoffee = withContext(Dispatchers.IO) {
-                    val links = db.coffeeMoodLinkDao().getLinksForMoodEntry(it.id)
-                    links.firstOrNull()?.let { link ->
-                        db.coffeeEntryDao().getById(link.coffee_entry_id)
+            override fun onMenuItemSelected(item: MenuItem): Boolean {
+                return when (item.itemId) {
+                    R.id.action_delete -> {
+                        showDeleteConfirmationDialog()
+                        true
                     }
-                }
-
-                val coffeeTypeName = withContext(Dispatchers.IO) {
-                    linkedCoffee?.let { coffee ->
-                        val types = db.coffeeTypeDao().getAllCoffeeTypeNames()
-                        types.find { it.id == coffee.coffee_type_id }?.name ?: getString(R.string.no_data)
-                    } ?: ""
-                }
-
-                linkedCoffee?.let { coffee ->
-                    binding.linkedCoffeeContainer.visibility = View.VISIBLE
-                    val coffeeText = getString(R.string.linked_coffee_template, coffeeTypeName, coffee.time)
-                    binding.linkedCoffeeInfo.text = coffeeText
-                    binding.linkedCoffeeContainer.setOnClickListener {
-                        val action = MoodDetailsFragmentDirections.actionMoodDetailsToCoffeeDetails(coffee.id)
-                        findNavController().navigate(action)
-                    }
+                    else -> false
                 }
             }
-        }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        viewModel.state
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .onEach { state ->
+                if (state.loading) return@onEach
+                if (state.error != null) {
+                    Toast.makeText(requireContext(), state.error, Toast.LENGTH_LONG).show()
+                    findNavController().popBackStack()
+                    return@onEach
+                }
+                val mood = state.mood
+                val coffee = state.coffee
+                // Обязательное наличие связанного кофе
+                if (mood == null || coffee == null) {
+                    Toast.makeText(requireContext(), "Запись или связанный кофе не найдены", Toast.LENGTH_SHORT).show()
+                    findNavController().popBackStack()
+                    return@onEach
+                }
+                binding.moodIcon.setImageResource(viewModel.moodLevelToDrawable(mood.mood_level))
+                binding.moodLevelValue.text = viewModel.moodLevelToText(mood.mood_level)
+                binding.dateValue.text = viewModel.formatDate(mood.date)
+                binding.timeValue.text = mood.time
+                binding.commentValue.text = mood.comment ?: getString(R.string.no_data)
+                binding.linkedCoffeeInfo.text = viewModel.getLinkedCoffeeInfo()
+
+                // Переход к деталям кофе
+                binding.linkedCoffeeContainer.setOnClickListener {
+                    val action = MoodDetailsFragmentDirections.actionMoodDetailsToCoffeeDetails(coffee.id)
+                    findNavController().navigate(action)
+                }
+            }
+            .launchIn(viewLifecycleOwner.lifecycleScope)
     }
 
-    private fun bindMood(entry: MoodEntry) {
-        binding.moodIcon.setImageResource(moodLevelToDrawable(entry.mood_level))
-        binding.moodLevelValue.text = moodLevelToText(entry.mood_level)
-        binding.dateValue.text = formatDate(entry.date)
-        binding.timeValue.text = entry.time
-        binding.commentValue.text = entry.comment ?: getString(R.string.no_data)
-    }
-
-    private fun formatDate(iso: String): String {
-        return try {
-            val parsed = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(iso)
-            SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(parsed!!)
-        } catch (e: Exception) {
-            iso
-        }
-    }
-
-    private fun moodLevelToText(level: Int): String {
-        return when (level) {
-            1 -> getString(R.string.mood_1_short)
-            2 -> getString(R.string.mood_2_short)
-            3 -> getString(R.string.mood_3_short)
-            4 -> getString(R.string.mood_4_short)
-            5 -> getString(R.string.mood_5_short)
-            else -> getString(R.string.mood_unknown)
-        }
-    }
-
-    private fun moodLevelToDrawable(level: Int): Int {
-        return when (level) {
-            1 -> R.drawable.mood_1
-            2 -> R.drawable.mood_2
-            3 -> R.drawable.mood_3
-            4 -> R.drawable.mood_4
-            5 -> R.drawable.mood_5
-            else -> R.drawable.mood_3
-        }
+    private fun showDeleteConfirmationDialog() {
+        AlertDialog.Builder(requireContext(), R.style.CoffiesDialogTheme)
+            .setTitle("Удалить запись?")
+            .setMessage("Вы действительно хотите удалить это настроение? Это действие нельзя отменить.")
+            .setPositiveButton("Удалить") { dialog, _ ->
+                viewModel.deleteMood {
+                    parentFragmentManager.setFragmentResult(
+                        "MOOD_DELETED",
+                        bundleOf("deleted_id" to args.moodEntryId)
+                    )
+                    findNavController().popBackStack()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
     }
 
     override fun onDestroyView() {

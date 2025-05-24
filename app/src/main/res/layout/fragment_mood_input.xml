@@ -1,41 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    android:padding="16dp"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".ui.addmood.MoodInputFragment">
+    android:clipToPadding="false"
+    android:clipChildren="false"
+    android:padding="10dp">
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
 
-        <LinearLayout
+        <!-- Карточка формы ввода настроения -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_marginBottom="10dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="7dp"
+            app:cardBackgroundColor="@color/light_beige">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@drawable/rounded_corners">
+                android:paddingTop="10dp"
+                android:paddingBottom="14dp"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp">
 
                 <!-- Заголовок -->
                 <TextView
-                    android:id="@+id/mood_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/mood_select_label"
+                    android:text="Настроение"
                     android:textColor="@color/black"
-                    android:textSize="20sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"
-                    android:layout_marginTop="10dp"
-                    android:layout_gravity="center"/>
+                    android:layout_marginBottom="4dp"
+                    android:layout_gravity="start" />
 
-                <!-- Выбор смайликов -->
+                <!-- Блок выбора настроения (эмодзи) -->
                 <LinearLayout
                     android:id="@+id/mood_emoji_container"
                     android:layout_width="match_parent"
@@ -47,23 +55,22 @@
                     android:layout_marginEnd="5dp"
                     android:gravity="center">
 
+                    <!-- 5 настроений (примерно как у тебя) -->
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical"
                         android:gravity="center">
-
                         <ImageView
                             android:id="@+id/mood_1"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:src="@drawable/mood_1"
-                            android:background="@drawable/mood_selector_bg"
+                            android:background="@drawable/mood_selector_background"
                             android:contentDescription="@string/mood_1_desc"
                             android:padding="3dp"
                             android:layout_gravity="center"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -72,24 +79,21 @@
                             android:textSize="12sp"
                             android:gravity="center"/>
                     </LinearLayout>
-
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical"
                         android:gravity="center">
-
                         <ImageView
                             android:id="@+id/mood_2"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:src="@drawable/mood_2"
-                            android:background="@drawable/mood_selector_bg"
+                            android:background="@drawable/mood_selector_background"
                             android:contentDescription="@string/mood_2_desc"
                             android:padding="3dp"
                             android:layout_gravity="center"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -98,24 +102,21 @@
                             android:textSize="12sp"
                             android:gravity="center"/>
                     </LinearLayout>
-
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1.1"
                         android:orientation="vertical"
                         android:gravity="center">
-
                         <ImageView
                             android:id="@+id/mood_3"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:src="@drawable/mood_3"
-                            android:background="@drawable/mood_selector_bg"
+                            android:background="@drawable/mood_selector_background"
                             android:contentDescription="@string/mood_3_desc"
                             android:padding="3dp"
                             android:layout_gravity="center"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -124,24 +125,21 @@
                             android:textSize="12sp"
                             android:gravity="center"/>
                     </LinearLayout>
-
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical"
                         android:gravity="center">
-
                         <ImageView
                             android:id="@+id/mood_4"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:src="@drawable/mood_4"
-                            android:background="@drawable/mood_selector_bg"
+                            android:background="@drawable/mood_selector_background"
                             android:contentDescription="@string/mood_4_desc"
                             android:padding="3dp"
                             android:layout_gravity="center"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -150,24 +148,21 @@
                             android:textSize="12sp"
                             android:gravity="center"/>
                     </LinearLayout>
-
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:orientation="vertical"
                         android:gravity="center">
-
                         <ImageView
                             android:id="@+id/mood_5"
                             android:layout_width="48dp"
                             android:layout_height="48dp"
                             android:src="@drawable/mood_5"
-                            android:background="@drawable/mood_selector_bg"
+                            android:background="@drawable/mood_selector_background"
                             android:contentDescription="@string/mood_5_desc"
                             android:padding="3dp"
                             android:layout_gravity="center"/>
-
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -182,12 +177,22 @@
                     android:id="@+id/mood_error"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/red"
+                    android:textColor="@android:color/holo_red_dark"
                     android:textSize="13sp"
                     android:visibility="gone"
                     android:layout_gravity="center"/>
 
-                <!-- Выбор момента -->
+                <!-- Момент употребления кофе -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Момент употребления кофе"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="start"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="4dp"/>
                 <RadioGroup
                     android:id="@+id/moment_radio_group"
                     android:layout_width="match_parent"
@@ -196,7 +201,6 @@
                     android:gravity="center"
                     android:layout_marginStart="5dp"
                     android:layout_marginEnd="5dp">
-
                     <RadioButton
                         android:id="@+id/moment_before"
                         android:layout_width="wrap_content"
@@ -205,7 +209,6 @@
                         android:buttonTint="@color/dark_beige"
                         android:textColor="@color/black"
                         android:layout_marginEnd="24dp"/>
-
                     <RadioButton
                         android:id="@+id/moment_after"
                         android:layout_width="wrap_content"
@@ -214,203 +217,182 @@
                         android:buttonTint="@color/dark_beige"
                         android:textColor="@color/black"/>
                 </RadioGroup>
-
                 <TextView
                     android:id="@+id/moment_error"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/red"
+                    android:textColor="@android:color/holo_red_dark"
                     android:textSize="13sp"
                     android:visibility="gone"
                     android:layout_gravity="center"/>
 
-                <LinearLayout
-                    android:id="@+id/linked_coffee_container"
+                <!-- Связанный прием кофе -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Связанный приём кофе"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="start"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="4dp"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/related_entry_input_layout"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="5dp"
-                    android:background="@drawable/rounded_corners_white"
-                    android:padding="10dp"
-                    android:layout_marginStart="5dp"
-                    android:layout_marginEnd="5dp"
-                    android:layout_marginBottom="10dp">
+                    app:boxBackgroundMode="filled"
+                    app:boxBackgroundColor="@android:color/white"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxStrokeWidth="0dp"
+                    app:boxStrokeColor="@android:color/transparent"
+                    app:endIconMode="dropdown_menu">
 
-                    <TextView
-                        android:id="@+id/linked_coffee_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/mood_linked_coffee_label"
-                        android:textColor="@color/black"
-                        android:textSize="16sp" />
-
-                    <LinearLayout
-                        android:id="@+id/linked_coffee_field"
+                    <AutoCompleteTextView
+                        android:id="@+id/related_entry_spinner"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical"
-                        android:paddingTop="6dp"
-                        android:paddingBottom="6dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?android:attr/selectableItemBackground">
+                        android:minLines="2"
+                        android:maxLines="4"
+                        android:textSize="16sp"
+                        android:background="@null"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:inputType="none"
+                        android:focusable="false"
+                        android:clickable="true" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                        <TextView
-                            android:id="@+id/linked_coffee_text"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/mood_linked_coffee_choose"
-                            android:textSize="15sp"
-                            android:textColor="@color/gray"/>
-
-                        <ImageView
-                            android:id="@+id/linked_coffee_arrow"
-                            android:layout_marginStart="5dp"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_arrow_right"
-                            android:contentDescription="@string/mood_select"/>
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/linked_coffee_error"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/red"
-                        android:textSize="13sp"
-                        android:visibility="gone"
-                        android:layout_marginTop="2dp"/>
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/rounded_corners"
-                android:layout_marginTop="10dp">
+                <TextView
+                    android:id="@+id/related_coffee_error"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/holo_red_dark"
+                    android:textSize="13sp"
+                    android:visibility="gone"
+                    android:layout_gravity="center"/>
 
                 <!-- Дата и время -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="10dp">
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="10dp">
 
                     <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:layout_marginStart="5dp"
-                        android:layout_marginEnd="5dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/time"
-                            android:textColor="@color/black"
-                            android:textSize="16sp" />
-
-                        <EditText
-                            android:id="@+id/time_input"
-                            android:layout_width="120dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="5dp"
-                            android:background="@drawable/rounded_corners_white"
-                            android:focusable="false"
-                            android:cursorVisible="false"
-                            android:clickable="true"
-                            android:paddingStart="12dp"
-                            android:paddingEnd="12dp" />
-                        <TextView
-                            android:id="@+id/time_error"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/red"
-                            android:textSize="13sp"
-                            android:visibility="gone"/>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:layout_marginStart="5dp"
-                        android:layout_marginEnd="5dp"
-                        android:layout_marginTop="10dp">
+                        android:orientation="vertical">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/date"
+                            android:text="Дата"
                             android:textColor="@color/black"
-                            android:textSize="16sp" />
-
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:layout_gravity="start"
+                            android:layout_marginBottom="2dp"/>
                         <EditText
                             android:id="@+id/date_input"
-                            android:layout_width="120dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="35dp"
+                            android:background="@drawable/rounded_corners_white_background"
+                            android:focusable="false"
+                            android:clickable="true"
+                            android:inputType="none"
+                            android:textSize="16sp"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"/>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="8dp"
+                        android:layout_height="0dp"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="5dp"
-                            android:background="@drawable/rounded_corners_white"
+                            android:text="Время"
+                            android:textColor="@color/black"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:layout_gravity="start"
+                            android:layout_marginBottom="2dp"/>
+                        <EditText
+                            android:id="@+id/time_input"
+                            android:layout_width="match_parent"
+                            android:layout_height="35dp"
+                            android:background="@drawable/rounded_corners_white_background"
                             android:focusable="false"
                             android:cursorVisible="false"
                             android:clickable="true"
+                            android:textSize="16sp"
                             android:paddingStart="12dp"
-                            android:paddingEnd="12dp" />
-                        <TextView
-                            android:id="@+id/date_error"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/red"
-                            android:textSize="13sp"
-                            android:visibility="gone"/>
+                            android:paddingEnd="12dp"/>
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Комментарий -->
-                <LinearLayout
+                <TextView
+                    android:id="@+id/datetime_error"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginStart="5dp"
-                    android:layout_marginEnd="5dp">
+                    android:textColor="@android:color/holo_red_dark"
+                    android:textSize="13sp"
+                    android:visibility="gone"
+                    android:gravity="center"/>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/comment"
-                        android:textColor="@color/black"
-                        android:textSize="16sp" />
-
-                    <EditText
-                        android:id="@+id/comment_input"
-                        android:layout_width="match_parent"
-                        android:layout_height="70dp"
-                        android:layout_marginTop="5dp"
-                        android:background="@drawable/rounded_corners_white"
-                        android:inputType="textMultiLine|textCapSentences"
-                        android:maxLength="200"
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:layout_marginBottom="10dp"/>
-                </LinearLayout>
+                <!-- Комментарий -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Комментарий"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_gravity="start"
+                    android:layout_marginTop="10dp"/>
+                <EditText
+                    android:id="@+id/comment_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:background="@drawable/rounded_corners_white_background"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLength="100"
+                    android:paddingStart="12dp"
+                    android:textSize="16sp"
+                    android:paddingEnd="12dp"
+                    android:layout_marginBottom="4dp"
+                    android:gravity="top|start"/>
             </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
-            <Button
-                android:id="@+id/save_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:backgroundTint="@color/dark_beige"
-                android:text="@string/save"
-                android:textColor="@color/black"
-                android:textSize="20sp" />
+        <!-- Кнопка действия вне карточки -->
+        <Button
+            android:id="@+id/save_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/dark_beige"
+            android:text="Сохранить"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            android:layout_marginBottom="10dp"
+            android:fontFamily="sans-serif-medium"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
-        </LinearLayout>
-    </ScrollView>
-</RelativeLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

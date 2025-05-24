@@ -5,17 +5,14 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MoodEntryDao {
 
-    @Query("SELECT * FROM mood_entries ORDER BY date DESC, time DESC")
-    fun getAll(): Flow<List<MoodEntry>>
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entry: MoodEntry): Long
 
     @Update
     suspend fun update(entry: MoodEntry)
 
-    @Delete
-    suspend fun delete(entry: MoodEntry)
+    @Query("SELECT * FROM mood_entries ORDER BY date DESC, time DESC")
+    fun getAll(): Flow<List<MoodEntry>>
 
     @Query("SELECT * FROM mood_entries WHERE id = :id")
     suspend fun getById(id: Int): MoodEntry?
@@ -37,6 +34,6 @@ interface MoodEntryDao {
     @Query("SELECT AVG(mood_level) FROM mood_entries WHERE date = :today")
     suspend fun getAverageMoodLevelForDate(today: String): Double?
 
-    @Query("SELECT * FROM mood_entries WHERE date = :today")
-    suspend fun getMoodEntriesForDate(today: String): List<MoodEntry>
+    @Delete
+    suspend fun delete(entry: MoodEntry)
 }

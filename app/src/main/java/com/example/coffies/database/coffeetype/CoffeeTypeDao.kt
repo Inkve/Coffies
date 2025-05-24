@@ -9,6 +9,12 @@ interface CoffeeTypeDao {
     @Query("SELECT * FROM coffee_types")
     fun getAll(): Flow<List<CoffeeType>>
 
+    @Query("SELECT * FROM coffee_types WHERE id = :id")
+    suspend fun getById(id: Int): CoffeeType?
+
+    @Query("SELECT id, name FROM coffee_types")
+    suspend fun getAllCoffeeTypeNames(): List<CoffeeTypeIdName>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(coffeeType: CoffeeType): Long
 
@@ -17,10 +23,4 @@ interface CoffeeTypeDao {
 
     @Delete
     suspend fun delete(coffeeType: CoffeeType)
-
-    @Query("SELECT * FROM coffee_types WHERE id = :id")
-    suspend fun getById(id: Int): CoffeeType?
-
-    @Query("SELECT id, name FROM coffee_types")
-    suspend fun getAllCoffeeTypeNames(): List<CoffeeTypeIdName>
 }

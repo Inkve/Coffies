@@ -1,10 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/scrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
+    android:padding="14dp"
+    android:clipToPadding="false"
+    android:clipChildren="false"
     android:background="@color/white">
 
     <LinearLayout
@@ -12,130 +13,181 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <LinearLayout
+        <!-- Основная карточка настроения -->
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/rounded_corners"
-            android:padding="10dp">
-
-            <ImageView
-                android:id="@+id/mood_icon"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
-                android:layout_gravity="center_horizontal"
-                android:importantForAccessibility="no"
-                android:src="@drawable/mood_3"
-                android:layout_marginBottom="16dp" />
-
-            <TextView
-                android:id="@+id/mood_level_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/mood_unknown"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="24dp" />
-
-            <TextView
-                android:id="@+id/date_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/date_label"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/date_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/no_data"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:layout_marginBottom="12dp" />
-
-            <TextView
-                android:id="@+id/time_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/time_label"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/time_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/no_data"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:layout_marginBottom="12dp" />
-
-            <TextView
-                android:id="@+id/comment_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/comment_label"
-                android:textStyle="bold"
-                android:textColor="@color/black"
-                android:textSize="16sp" />
-
-            <TextView
-                android:id="@+id/comment_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/no_data"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:layout_marginBottom="12dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/linked_coffee_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="@drawable/rounded_corners"
-            android:padding="10dp"
-            android:layout_marginTop="12dp"
-            android:gravity="center_vertical"
-            android:clickable="true"
-            android:focusable="true">
+            app:cardCornerRadius="18dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="@color/light_beige"
+            android:layout_marginBottom="14dp">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:padding="14dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <ImageView
+                    android:id="@+id/mood_icon"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_gravity="center_horizontal"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/mood_3"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Настроение -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/linked_coffee_label"
-                    android:textStyle="bold"
-                    android:textColor="@color/black"
-                    android:textSize="16sp" />
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/mood_label"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/mood_level_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+
+                <!-- Время -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/time_label"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/time_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+
+                <!-- Дата -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/date_label"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/date_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+
+                <!-- Комментарий -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="0dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/comment_label"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/comment_value"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="—"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:layout_marginStart="8dp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Блок связанного кофе -->
+        <TextView
+            android:id="@+id/linked_coffee_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/linked_coffee_label"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="0dp" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/light_beige"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="0dp">
+
+            <LinearLayout
+                android:id="@+id/linked_coffee_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="10dp"
+                android:gravity="center_vertical"
+                android:clickable="true"
+                android:focusable="true">
 
                 <TextView
                     android:id="@+id/linked_coffee_info"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="@string/no_data"
                     android:textColor="@color/black"
                     android:textSize="16sp"
-                    android:layout_marginTop="4dp" />
-            </LinearLayout>
+                    android:layout_marginEnd="8dp" />
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:importantForAccessibility="no"
-                android:src="@drawable/ic_arrow_right" />
-        </LinearLayout>
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_arrow_right"
+                    android:layout_gravity="center_vertical" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
 
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>

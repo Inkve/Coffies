@@ -24,10 +24,11 @@ class MainFragment : Fragment() {
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(AppDatabase.getInstance(requireContext()))
     }
-
     private val recAdapter = RecommendationAdapter()
 
-    private val DAILY_CAFFEINE_LIMIT = 400
+    private val colorRed by lazy { ContextCompat.getColor(requireContext(), R.color.red) }
+    private val colorBlack by lazy { ContextCompat.getColor(requireContext(), R.color.black) }
+    private val colorGray by lazy { ContextCompat.getColor(requireContext(), R.color.gray) }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,52 +52,47 @@ class MainFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
                 viewModel.stats.collect { stats ->
-                    if (stats != null) {
-                        // --- Чашки кофе ---
-                        val cupGoal = stats.cupGoal
-                        if (cupGoal != null) {
-                            binding.cupsText.text = "Чашек кофе: ${stats.cupsCount} / $cupGoal"
-                            val exceeded = if (cupGoal == 0) stats.cupsCount > 0 else stats.cupsCount > cupGoal
-                            if (exceeded) {
-                                binding.cupsText.setTextColor(ContextCompat.getColor(requireContext(), R.color.red))
-                            } else {
-                                binding.cupsText.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-                            }
-                        } else {
-                            binding.cupsText.text = "Чашек кофе: ${stats.cupsCount}"
-                            binding.cupsText.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-                        }
-
-                        // --- Кофеин ---
-                        val caffeineText = "Кофеин: \n ${stats.caffeine} / $DAILY_CAFFEINE_LIMIT мг"
-                        binding.caffeineText.text = caffeineText
-                        if (stats.caffeine > DAILY_CAFFEINE_LIMIT) {
-                            binding.caffeineText.setTextColor(ContextCompat.getColor(requireContext(), R.color.red))
-                        } else {
-                            binding.caffeineText.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-                        }
-
-                        // --- Потрачено ---
-                        val spendGoal = stats.spendGoal
-                        if (spendGoal != null) {
-                            binding.spentText.text = "Потрачено: \n %.2f / %.2f ₽".format(stats.totalSpent, spendGoal)
-                            val exceeded = if (spendGoal == 0f) stats.totalSpent > 0f else stats.totalSpent > spendGoal
-                            if (exceeded) {
-                                binding.spentText.setTextColor(ContextCompat.getColor(requireContext(), R.color.red))
-                            } else {
-                                binding.spentText.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-                            }
-                        } else {
-                            binding.spentText.text = "Потрачено: \n %.2f ₽".format(stats.totalSpent)
-                            binding.spentText.setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
-                        }
-
-                        // --- Настроение ---
-                        binding.currentMoodIcon.setImageResource(moodLevelToDrawable(stats.avgMood))
-                        binding.moodText.text = "Настроение: \n ${moodLevelToText(stats.avgMood)}"
-
-                        recAdapter.submitList(stats.recommendations)
+                    // Чашки кофе (оставляем как было)
+                    binding.cupsText.text = when {
+                        stats?.cupsCount != null && stats.cupGoal != null ->
+                            getString(R.string.cups_count_with_goal, stats.cupsCount, stats.cupGoal)
+                        stats?.cupsCount != null ->
+                            getString(R.string.cups_count_simple, stats.cupsCount)
+                        else -> getString(R.string.no_data)
                     }
+                    val isCupExceeded = stats?.cupGoal != null && stats.cupsCount != null && stats.cupGoal > 0 && stats.cupsCount > stats.cupGoal
+                    binding.cupsText.setTextColor(if (isCupExceeded) colorRed else colorBlack)
+
+                    // КОФЕИН — значение и лимит (всегда 400 мг)
+                    binding.caffeineText.text = stats?.caffeine?.let { "$it мг" } ?: getString(R.string.no_data)
+                    val isCaffeineExceeded = stats?.caffeine != null && stats.caffeine > 400
+                    binding.caffeineText.setTextColor(if (isCaffeineExceeded) colorRed else colorBlack)
+                    binding.caffeineLimitText.text = "/ 400 мг"
+                    binding.caffeineLimitText.setTextColor(if (isCaffeineExceeded) colorRed else colorBlack)
+
+                    // НАСТРОЕНИЕ
+                    if (stats?.avgMood != null && stats.avgMood > 0) {
+                        binding.currentMoodIcon.setImageResource(moodLevelToDrawable(stats.avgMood))
+                        binding.moodText.text = moodLevelToText(stats.avgMood)
+                        binding.moodText.setTextColor(colorBlack)
+                    } else {
+                        binding.currentMoodIcon.setImageResource(R.drawable.mood_3)
+                        binding.moodText.text = getString(R.string.no_data)
+                        binding.moodText.setTextColor(colorBlack)
+                    }
+
+                    binding.moodLimitText.text = "/ Отличное"
+                    binding.moodLimitText.setTextColor(colorBlack)
+
+                    // ДЕНЬГИ — значение с ₽, лимит тоже
+                    binding.spentText.text = stats?.totalSpent?.let { "%.2f ₽".format(it) } ?: getString(R.string.no_data)
+                    val isSpendExceeded = stats?.spendGoal != null && stats.totalSpent != null && stats.totalSpent > stats.spendGoal
+                    binding.spentText.setTextColor(if (isSpendExceeded) colorRed else colorBlack)
+                    binding.spentLimitText.text =
+                        if (stats?.spendGoal != null) "/ %.2f ₽".format(stats.spendGoal) else "/ " + getString(R.string.infinity)
+                    binding.spentLimitText.setTextColor(if (isSpendExceeded) colorRed else colorBlack)
+
+                    recAdapter.updateFromStats(stats)
                 }
             }
         }
@@ -132,7 +128,7 @@ class MainFragment : Fragment() {
             3 -> getString(R.string.mood_3_short)
             4 -> getString(R.string.mood_4_short)
             5 -> getString(R.string.mood_5_short)
-            else -> getString(R.string.mood_unknown)
+            else -> getString(R.string.no_data)
         }
     }
 }

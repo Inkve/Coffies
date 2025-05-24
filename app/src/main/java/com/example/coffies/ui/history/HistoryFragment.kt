@@ -1,23 +1,24 @@
 package com.example.coffies.ui.history
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.coffies.R
 import com.example.coffies.database.AppDatabase
 import com.example.coffies.databinding.FragmentHistoryBinding
+import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -43,41 +44,13 @@ class HistoryFragment : Fragment() {
         return binding.root
     }
 
-    @SuppressLint("UnsafeRepeatOnLifecycleDetector")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupRecyclerView()
         setupDateRangePicker()
-        setupFilterButton()
         setupSwipeRefresh()
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.historyItems.collectLatest { items ->
-                        historyAdapter.submitList(items)
-                        binding.emptyView.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
-                    }
-                }
-
-                launch {
-                    viewModel.dateRange.collectLatest { (start, end) ->
-                        binding.dateRangeText.text = formatDateRange(start, end)
-                    }
-                }
-
-                launch {
-                    viewModel.filters.collectLatest { filters ->
-                        updateFilterChips(filters)
-                    }
-                }
-
-                launch {
-                    viewModel.isLoading.collectLatest { isLoading ->
-                        binding.swipeRefresh.isRefreshing = isLoading
-                    }
-                }
-            }
-        }
+        setupChipFilters()
+        observeViewModel()
+        observeDeleteResult()
     }
 
     private fun setupRecyclerView() {
@@ -108,17 +81,24 @@ class HistoryFragment : Fragment() {
     }
 
     private fun setupDateRangePicker() {
-        binding.dateRangeText.setOnClickListener {
+        binding.dateRangeLayout.setOnClickListener {
             val currentStart = viewModel.dateRange.value.first
             val currentEnd = viewModel.dateRange.value.second
+
+            val todayMillis = MaterialDatePicker.todayInUtcMilliseconds()
+            val validator = MaxDateValidator(todayMillis)
+            val constraints = CalendarConstraints.Builder()
+                .setValidator(validator)
+                .build()
 
             val picker = MaterialDatePicker.Builder.dateRangePicker()
                 .setTheme(R.style.CoffiesCalendarPickerTheme)
                 .setTitleText("Выберите период")
+                .setCalendarConstraints(constraints)
                 .setSelection(
                     androidx.core.util.Pair(
-                        currentStart.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(),
-                        currentEnd.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        currentStart.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli(),
+                        currentEnd.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
                     )
                 )
                 .build()
@@ -135,41 +115,47 @@ class HistoryFragment : Fragment() {
         }
     }
 
-
-    private fun setupFilterButton() {
-        binding.filterButton.setOnClickListener {
-            HistoryFilterBottomSheet.newInstance(viewModel.filters.value) { filters ->
-                viewModel.updateFilters(filters)
-            }.show(childFragmentManager, "filters")
+    private fun setupChipFilters() {
+        binding.chipCoffee.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.toggleCoffeeFilter(isChecked)
+        }
+        binding.chipMood.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.toggleMoodFilter(isChecked)
         }
     }
 
-    private fun updateFilterChips(filters: HistoryFilters) {
-        val group = binding.activeFiltersGroup
-        group.removeAllViews()
+    private fun observeViewModel() {
+        viewModel.historyItems
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .onEach { items ->
+                historyAdapter.submitList(items)
+                binding.emptyView.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
+            }
+            .launchIn(viewLifecycleOwner.lifecycleScope)
 
-        val context = requireContext()
-        var hasFilters = false
+        viewModel.dateRange
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .onEach { (start, end) ->
+                binding.dateRangeText.text = formatDateRange(start, end)
+            }
+            .launchIn(viewLifecycleOwner.lifecycleScope)
 
-        if (!filters.showCoffee) {
-            group.addView(createChip(context, "Без кофе"))
-            hasFilters = true
-        }
+        viewModel.filters
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .onEach { filters ->
+                if (binding.chipCoffee.isChecked != filters.showCoffee)
+                    binding.chipCoffee.isChecked = filters.showCoffee
+                if (binding.chipMood.isChecked != filters.showMood)
+                    binding.chipMood.isChecked = filters.showMood
+            }
+            .launchIn(viewLifecycleOwner.lifecycleScope)
 
-        if (!filters.showMood) {
-            group.addView(createChip(context, "Без настроения"))
-            hasFilters = true
-        }
-
-        group.visibility = if (hasFilters) View.VISIBLE else View.GONE
-    }
-
-    private fun createChip(context: android.content.Context, text: String): com.google.android.material.chip.Chip {
-        return com.google.android.material.chip.Chip(context).apply {
-            this.text = text
-            isCheckable = false
-            isClickable = false
-        }
+        viewModel.isLoading
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .onEach { isLoading ->
+                binding.swipeRefresh.isRefreshing = isLoading
+            }
+            .launchIn(viewLifecycleOwner.lifecycleScope)
     }
 
     private fun formatDateRange(start: LocalDate, end: LocalDate): String {
@@ -180,6 +166,32 @@ class HistoryFragment : Fragment() {
             start == end -> start.format(formatter)
             else -> "${start.format(formatter)} - ${end.format(formatter)}"
         }
+    }
+
+    private fun observeDeleteResult() {
+        // Старый обработчик для удаления кофе
+        parentFragmentManager.setFragmentResultListener(
+            "COFFEE_DELETED",
+            viewLifecycleOwner
+        ) { _, bundle ->
+            val deletedId = bundle.getInt("deleted_id")
+            viewModel.forceReload()
+            Toast.makeText(requireContext(), "Запись удалена", Toast.LENGTH_SHORT).show()
+        }
+        // Новый обработчик для удаления настроения
+        parentFragmentManager.setFragmentResultListener(
+            "MOOD_DELETED",
+            viewLifecycleOwner
+        ) { _, bundle ->
+            val deletedId = bundle.getInt("deleted_id")
+            viewModel.forceReload()
+            Toast.makeText(requireContext(), "Настроение удалено", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.forceReload()
     }
 
     override fun onDestroyView() {

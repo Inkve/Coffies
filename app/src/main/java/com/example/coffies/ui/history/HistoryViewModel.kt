@@ -56,8 +56,12 @@ class HistoryViewModel(
         forceReload()
     }
 
-    fun updateFilters(filters: HistoryFilters) {
-        _filters.value = filters
+    fun toggleCoffeeFilter(show: Boolean) {
+        _filters.value = _filters.value.copy(showCoffee = show)
+        forceReload()
+    }
+    fun toggleMoodFilter(show: Boolean) {
+        _filters.value = _filters.value.copy(showMood = show)
         forceReload()
     }
 

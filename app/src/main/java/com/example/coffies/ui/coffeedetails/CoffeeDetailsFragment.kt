@@ -1,21 +1,21 @@
 package com.example.coffies.ui.coffeedetails
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import android.widget.Toast
+import androidx.core.os.bundleOf
+import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.coffies.R
-import com.example.coffies.database.AppDatabase
-import com.example.coffies.database.coffeentry.CoffeeEntry
-import com.example.coffies.database.moodentry.MoodEntry
 import com.example.coffies.databinding.FragmentCoffeeDetailsBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -25,6 +25,12 @@ class CoffeeDetailsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val args: CoffeeDetailsFragmentArgs by navArgs()
+    private val viewModel: CoffeeDetailsViewModel by viewModels {
+        CoffeeDetailsViewModelFactory(
+            com.example.coffies.database.AppDatabase.getInstance(requireContext()),
+            args.coffeeEntryId
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -35,22 +41,38 @@ class CoffeeDetailsFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val db = AppDatabase.getInstance(requireContext())
-        val id = args.coffeeEntryId
+        // Подписка на state
+        viewModel.state
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .onEach { state ->
+                if (state.isLoading) return@onEach
+                state.coffee?.let { bindCoffee(it, state) }
+                bindMoodBlocks(state)
+                state.error?.let {
+                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                }
+            }
+            .launchIn(viewLifecycleOwner.lifecycleScope)
 
-        lifecycleScope.launch {
-            val coffee = withContext(Dispatchers.IO) {
-                db.coffeeEntryDao().getById(id)
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.coffee_details_menu, menu)
             }
-            coffee?.let { entry ->
-                bindCoffee(entry)
-                bindMoodBlocks(db, entry.id)
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_delete -> {
+                        showDeleteConfirmationDialog()
+                        true
+                    }
+                    else -> false
+                }
             }
-        }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
     }
 
-    private fun bindCoffee(entry: CoffeeEntry) {
-        binding.coffeeTypeValue.text = getCoffeeTypeName(entry.coffee_type_id)
+    private fun bindCoffee(entry: com.example.coffies.database.coffeentry.CoffeeEntry, state: CoffeeDetailsState) {
+        binding.coffeeTypeValue.text = state.coffeeTypeNames[entry.coffee_type_id] ?: "Тип ${entry.coffee_type_id}"
         binding.volumeValue.text = entry.volume_ml.toString()
         binding.quantityValue.text = entry.quantity.toString()
         binding.caffeineValue.text = String.format("%.0f", entry.caffeine_mg)
@@ -61,66 +83,58 @@ class CoffeeDetailsFragment : Fragment() {
         binding.commentValue.text = entry.comment ?: getString(R.string.no_data)
     }
 
-    private suspend fun bindMoodBlocks(db: AppDatabase, coffeeId: Int) {
-        val links = withContext(Dispatchers.IO) {
-            db.coffeeMoodLinkDao().getLinksForCoffeeEntry(coffeeId)
-        }
-        val moodMap = mutableMapOf<String, MoodEntry>()
-        for (link in links) {
-            val mood = withContext(Dispatchers.IO) {
-                db.moodEntryDao().getById(link.mood_entry_id)
-            }
-            if (mood != null) moodMap[link.relation_type] = mood
-        }
-
-        setupMoodBlock(
+    private fun bindMoodBlocks(state: CoffeeDetailsState) {
+        bindMoodBlock(
             container = binding.moodBeforeContainer,
             label = binding.moodBeforeLabel,
             value = binding.moodBeforeValue,
             icon = binding.moodBeforeIcon,
-            mood = moodMap["before and during"],
-            onClick = {
-                moodMap["before and during"]?.let {
-                    findNavController().navigate(
-                        R.id.action_coffeeDetails_to_moodDetails,
-                        Bundle().apply { putInt("moodEntryId", it.id) }
-                    )
-                } ?: findNavController().navigate(R.id.action_coffeeDetails_to_addMood)
-            }
+            mood = state.moodMap["before and during"],
+            momentType = "before and during"
         )
-
-        setupMoodBlock(
+        bindMoodBlock(
             container = binding.moodAfterContainer,
             label = binding.moodAfterLabel,
             value = binding.moodAfterValue,
             icon = binding.moodAfterIcon,
-            mood = moodMap["after"],
-            onClick = {
-                moodMap["after"]?.let {
-                    findNavController().navigate(
-                        R.id.action_coffeeDetails_to_moodDetails,
-                        Bundle().apply { putInt("moodEntryId", it.id) }
-                    )
-                } ?: findNavController().navigate(R.id.action_coffeeDetails_to_addMood)
-            }
+            mood = state.moodMap["after"],
+            momentType = "after"
         )
     }
 
-    private fun setupMoodBlock(
+    private fun bindMoodBlock(
         container: View,
         label: View,
         value: android.widget.TextView,
         icon: android.widget.ImageView,
-        mood: MoodEntry?,
-        onClick: () -> Unit
+        mood: com.example.coffies.database.moodentry.MoodEntry?,
+        momentType: String
     ) {
-        container.setOnClickListener { onClick() }
+        container.setOnClickListener {
+            val entry = viewModel.state.value.coffee ?: return@setOnClickListener
+            if (mood != null) {
+                findNavController().navigate(
+                    R.id.action_coffeeDetails_to_moodDetails,
+                    bundleOf("moodEntryId" to mood.id)
+                )
+            } else {
+                findNavController().navigate(
+                    R.id.action_coffeeDetails_to_addMood,
+                    bundleOf(
+                        "relatedCoffeeId" to entry.id,
+                        "relatedCoffeeTime" to entry.time,
+                        "relatedCoffeeDate" to entry.date,
+                        "momentType" to momentType
+                    )
+                )
+            }
+        }
         if (mood != null) {
             value.text = getString(
                 R.string.mood_brief_template,
                 moodLevelToText(mood.mood_level),
-                formatDate(mood.date),
-                mood.time
+                mood.time,
+                formatDate(mood.date)
             )
             icon.setImageResource(moodLevelToDrawable(mood.mood_level))
         } else {
@@ -136,11 +150,6 @@ class CoffeeDetailsFragment : Fragment() {
         } catch (e: Exception) {
             iso
         }
-    }
-
-    private fun getCoffeeTypeName(typeId: Int): String {
-        // todo: загрузи из ViewModel или базы, если нужно
-        return "Американо" // заглушка
     }
 
     private fun moodLevelToText(level: Int): String {
@@ -163,6 +172,32 @@ class CoffeeDetailsFragment : Fragment() {
             5 -> R.drawable.mood_5
             else -> R.drawable.mood_3
         }
+    }
+
+    private fun showDeleteConfirmationDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(
+            requireContext(),
+            R.style.CoffiesDeleteDialogTheme
+        )
+            .setTitle("Удалить запись?")
+            .setMessage("Вы действительно хотите удалить эту запись кофе и все связанные с ней настроения? Это действие нельзя отменить.")
+            .setPositiveButton("Удалить") { dialog, _ ->
+                viewModel.deleteWithMoods {
+                    parentFragmentManager.setFragmentResult(
+                        "COFFEE_DELETED",
+                        bundleOf("deleted_id" to args.coffeeEntryId)
+                    )
+                    activity?.runOnUiThread { findNavController().popBackStack() }
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Отмена") { dialog, _ -> dialog.dismiss() }
+            .show()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.loadAll()
     }
 
     override fun onDestroyView() {

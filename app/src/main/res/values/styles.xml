@@ -1,14 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="CoffiesCalendarPickerTheme" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
+        <item name="colorPrimary">@color/dark_beige</item>
+        <item name="colorOnPrimary">@color/brown</item>
+        <item name="colorSecondary">@color/dark_beige</item>
+    </style>
+
+    <style name="CoffiesDeleteDialogTheme" parent="Theme.MaterialComponents.Light.Dialog.Alert">
+        <item name="colorPrimary">@color/dark_beige</item>
+        <item name="colorOnPrimary">@color/brown</item>
+        <item name="colorSecondary">@color/dark_beige</item>
+        <item name="colorOnSecondary">@color/brown</item>
+        <item name="android:background">@color/white</item>
+        <item name="android:textColorPrimary">@color/brown</item>
+        <item name="android:buttonBarPositiveButtonStyle">@style/CoffiesDeleteDialogButton</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/CoffiesDeleteDialogButton</item>
+    </style>
+
     <style name="CoffiesDialogTheme" parent="Theme.MaterialComponents.Light.Dialog">
         <item name="colorPrimary">@color/dark_beige</item>
         <item name="colorOnPrimary">@color/brown</item>
         <item name="colorSecondary">@color/dark_beige</item>
     </style>
 
-    <style name="CoffiesCalendarPickerTheme" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
-        <item name="colorPrimary">@color/dark_beige</item>
-        <item name="colorOnPrimary">@color/brown</item>
-        <item name="colorSecondary">@color/dark_beige</item>
+    <style name="CoffiesDeleteDialogButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/brown</item>
+        <item name="materialButtonOutlinedStyle">@color/dark_beige</item>
     </style>
 </resources>

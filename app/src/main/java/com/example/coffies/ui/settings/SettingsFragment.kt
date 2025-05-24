@@ -1,30 +1,21 @@
 package com.example.coffies.ui.settings
 
-import android.app.Activity
-import android.content.Intent
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.*
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
+import androidx.activity.OnBackPressedCallback
+import androidx.core.view.MenuProvider
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.example.coffies.R
 import com.example.coffies.database.AppDatabase
-import com.example.coffies.database.usersettings.UserSettings
 import com.example.coffies.databinding.FragmentSettingsBinding
-import com.google.android.material.datepicker.MaterialDatePicker
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import java.io.File
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class SettingsFragment : Fragment() {
 
@@ -34,239 +25,208 @@ class SettingsFragment : Fragment() {
         SettingsViewModelFactory(AppDatabase.getInstance(requireContext()))
     }
 
-    private var editing = false
-    private var selectedBirthDate: String? = null // yyyy-MM-dd
-    private var avatarUri: String? = null
-    private var currentId: Int = 0
+    private var isDialogShown = false
+    private var isResetDialogShown = false
+    private var isUpdatingEditText = false
 
-    private val avatarPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
-            val uri = result.data?.data
-            if (uri != null) {
-                val localPath = copyAvatarToAppStorage(uri)
-                if (localPath != null) {
-                    avatarUri = localPath
-                    showAvatarFromLocalPath(localPath)
-                } else {
-                    Toast.makeText(requireContext(), "Не удалось загрузить изображение", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
         return binding.root
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        viewModel.settings.collectOnLifecycle(this) { settings ->
-            showSettings(settings)
-        }
+        requireActivity().addMenuProvider(object : MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                menuInflater.inflate(R.menu.menu_settings_actions, menu)
+            }
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return when (menuItem.itemId) {
+                    R.id.action_edit -> {
+                        if (viewModel.state.value.isEditing) {
+                            // Если редактируем, действуем как при Back
+                            if (viewModel.hasChanges()) {
+                                if (!isDialogShown) {
+                                    isDialogShown = true
+                                    showUnsavedChangesDialog()
+                                }
+                            } else {
+                                viewModel.exitEditMode()
+                                hideKeyboard()
+                            }
+                        } else {
+                            viewModel.enterEditMode()
+                        }
+                        true
+                    }
+                    R.id.action_reset -> {
+                        if (!isResetDialogShown) showResetDialog()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        binding.avatarImage.setOnClickListener {
-            if (editing) pickAvatarFromGallery()
+        // EditText слушатели
+        binding.nameEdit.addTextChangedListener {
+            if (viewModel.state.value.isEditing && !isUpdatingEditText) {
+                viewModel.onNameChanged(it?.toString().orEmpty())
+            }
+        }
+        binding.cupGoalEdit.addTextChangedListener {
+            if (viewModel.state.value.isEditing && !isUpdatingEditText) {
+                viewModel.onCupGoalChanged(it?.toString().orEmpty())
+            }
+        }
+        binding.monthlyCupGoalEdit.addTextChangedListener {
+            if (viewModel.state.value.isEditing && !isUpdatingEditText) {
+                viewModel.onMonthlyCupGoalChanged(it?.toString().orEmpty())
+            }
+        }
+        binding.spendGoalEdit.addTextChangedListener {
+            if (viewModel.state.value.isEditing && !isUpdatingEditText) {
+                viewModel.onSpendGoalChanged(it?.toString().orEmpty())
+            }
+        }
+        binding.monthlySpendGoalEdit.addTextChangedListener {
+            if (viewModel.state.value.isEditing && !isUpdatingEditText) {
+                viewModel.onMonthlySpendGoalChanged(it?.toString().orEmpty())
+            }
         }
 
         binding.saveButton.setOnClickListener {
-            val userSettings = collectSettingsFromUI()
-            viewModel.saveSettings(userSettings)
-            setEditingMode(false)
+            viewModel.save()
+            hideKeyboard()
             Toast.makeText(requireContext(), "Настройки сохранены", Toast.LENGTH_SHORT).show()
         }
 
-        setEditingMode(false)
+        viewModel.state
+            .flowWithLifecycle(viewLifecycleOwner.lifecycle, Lifecycle.State.STARTED)
+            .onEach { state -> render(state) }
+            .launchIn(viewLifecycleOwner.lifecycleScope)
 
-        binding.nameEdit.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) setEditingMode(true) }
-        binding.cupGoalEdit.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) setEditingMode(true) }
-        binding.spendGoalEdit.setOnFocusChangeListener { _, hasFocus -> if (hasFocus) setEditingMode(true) }
-        binding.ageValue.setOnClickListener {
-            if (editing) showDatePicker()
-        }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.menu_settings_actions, menu)
-        super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_edit -> {
-                setEditingMode(true)
-                return true
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (viewModel.state.value.isEditing) {
+                        if (viewModel.hasChanges()) {
+                            // Если были изменения — спрашиваем
+                            if (!isDialogShown) {
+                                isDialogShown = true
+                                showUnsavedChangesDialog()
+                            }
+                        } else {
+                            // Если изменений не было — просто выйти в просмотр
+                            viewModel.exitEditMode()
+                            hideKeyboard()
+                        }
+                    } else {
+                        isEnabled = false
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    }
+                }
             }
-            R.id.action_reset -> {
-                viewModel.resetSettings()
-                Toast.makeText(requireContext(), "Настройки сброшены", Toast.LENGTH_SHORT).show()
-                return true
-            }
-            R.id.action_full_reset -> {
-                Toast.makeText(requireContext(), "Функция сброса всех данных будет реализована позже", Toast.LENGTH_LONG).show()
-                return true
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    private fun showSettings(settings: UserSettings?) {
-        if (settings == null) {
-            currentId = 0
-            binding.nameEdit.setText("")
-            binding.cupGoalEdit.setText("")
-            binding.spendGoalEdit.setText("")
-            avatarUri = null
-            binding.avatarImage.setImageResource(R.drawable.ic_avatar_placeholder)
-            selectedBirthDate = null
-            binding.ageValue.text = "—"
-            return
-        }
-        currentId = settings.id
-        binding.nameEdit.setText(settings.name ?: "")
-        binding.cupGoalEdit.setText(settings.daily_cup_goal?.toString() ?: "")
-        binding.spendGoalEdit.setText(settings.daily_spend_goal?.let {
-            if (it == it.toInt().toFloat()) it.toInt().toString() else it.toString()
-        } ?: "")
-        avatarUri = settings.avatarUri
-        showAvatarFromLocalPath(avatarUri)
-        selectedBirthDate = settings.birth_date
-
-        if (editing) {
-            binding.ageValue.text = selectedBirthDate?.let { formatDateRu(it) } ?: "Выбрать дату"
-        } else {
-            binding.ageValue.text = settings.birth_date?.let { bd ->
-                val years = calculateAge(bd)
-                "$years лет"
-            } ?: "—"
-        }
-    }
-
-    private fun showAvatarFromLocalPath(path: String?) {
-        if (!path.isNullOrBlank()) {
-            val file = File(path)
-            if (file.exists()) {
-                binding.avatarImage.setImageURI(Uri.fromFile(file))
-            } else {
-                binding.avatarImage.setImageResource(R.drawable.ic_avatar_placeholder)
-            }
-        } else {
-            binding.avatarImage.setImageResource(R.drawable.ic_avatar_placeholder)
-        }
-    }
-
-    private fun copyAvatarToAppStorage(uri: Uri): String? {
-        return try {
-            val inputStream = requireContext().contentResolver.openInputStream(uri) ?: return null
-            val fileName = "avatar_${System.currentTimeMillis()}.jpg"
-            val file = File(requireContext().filesDir, fileName)
-            file.outputStream().use { output ->
-                inputStream.copyTo(output)
-            }
-            inputStream.close()
-            file.absolutePath
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    private fun setEditingMode(edit: Boolean) {
-        editing = edit
-        binding.nameEdit.isEnabled = edit
-        binding.cupGoalEdit.isEnabled = edit
-        binding.spendGoalEdit.isEnabled = edit
-        binding.saveButton.visibility = if (edit) View.VISIBLE else View.GONE
-        binding.avatarImage.alpha = if (edit) 0.85f else 1f
-
-        if (edit) {
-            binding.ageValue.setOnClickListener { showDatePicker() }
-            binding.ageValue.setTextColor(resources.getColor(R.color.dark_beige, null))
-            binding.ageValue.text = selectedBirthDate?.let { formatDateRu(it) } ?: "Выбрать дату"
-        } else {
-            binding.ageValue.setOnClickListener(null)
-            binding.ageValue.setTextColor(resources.getColor(R.color.black, null))
-            binding.ageValue.text = selectedBirthDate?.let { bd ->
-                val years = calculateAge(bd)
-                "$years лет"
-            } ?: "—"
-        }
-    }
-
-    private fun pickAvatarFromGallery() {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        avatarPicker.launch(intent)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    private fun showDatePicker() {
-        val currentDate = selectedBirthDate?.let {
-            LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE)
-        } ?: LocalDate.now()
-
-        val picker = MaterialDatePicker.Builder.datePicker()
-            .setTitleText("Дата рождения")
-            .setTheme(R.style.CoffiesCalendarPickerTheme)
-            .setSelection(currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
-            .build()
-
-        picker.addOnPositiveButtonClickListener { millis ->
-            val date = LocalDate.ofInstant(java.time.Instant.ofEpochMilli(millis), ZoneId.systemDefault())
-            selectedBirthDate = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
-            binding.ageValue.text = formatDateRu(selectedBirthDate!!)
-        }
-
-        picker.show(parentFragmentManager, "birth_date_picker")
-    }
-
-    private fun formatDateRu(dateIso: String): String {
-        return try {
-            val d = LocalDate.parse(dateIso, DateTimeFormatter.ISO_LOCAL_DATE)
-            d.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
-        } catch (e: Exception) { dateIso }
-    }
-
-    private fun collectSettingsFromUI(): UserSettings {
-        val name = binding.nameEdit.text?.toString()?.takeIf { it.isNotBlank() }
-        val cups = binding.cupGoalEdit.text?.toString()?.toIntOrNull()
-        val spend = binding.spendGoalEdit.text?.toString()?.toFloatOrNull()
-        return UserSettings(
-            id = currentId,
-            name = name,
-            birth_date = selectedBirthDate,
-            daily_cup_goal = cups,
-            daily_spend_goal = spend,
-            avatarUri = avatarUri
         )
     }
 
-    private fun calculateAge(birthDate: String): Int {
-        return try {
-            val dob = LocalDate.parse(birthDate, DateTimeFormatter.ISO_LOCAL_DATE)
-            val today = LocalDate.now()
-            var age = today.year - dob.year
-            if (today < dob.plusYears(age.toLong())) age--
-            age
-        } catch (e: Exception) { 0 }
+    private fun showUnsavedChangesDialog() {
+        android.app.AlertDialog.Builder(requireContext(), R.style.CoffiesDialogTheme)
+            .setTitle("Сохранить изменения?")
+            .setMessage("У вас есть несохранённые изменения. Сохранить перед выходом?")
+            .setPositiveButton("Сохранить") { dialog, _ ->
+                viewModel.save()
+                dialog.dismiss()
+                Toast.makeText(requireContext(), "Настройки сохранены", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Выйти без сохранения") { dialog, _ ->
+                viewModel.discardChangesAndExitEditMode()
+                hideKeyboard()
+                dialog.dismiss()
+            }
+            .setOnDismissListener { isDialogShown = false }
+            .show()
+    }
+
+    private fun showResetDialog() {
+        isResetDialogShown = true
+        android.app.AlertDialog.Builder(requireContext(), R.style.CoffiesDeleteDialogTheme)
+            .setTitle("Сбросить настройки?")
+            .setMessage("Вы уверены, что хотите сбросить настройки пользователя? Это действие удалит все ваши настройки и не может быть отменено.")
+            .setPositiveButton("Сбросить") { dialog, _ ->
+                viewModel.resetSettings()
+                dialog.dismiss()
+                Toast.makeText(requireContext(), "Настройки сброшены", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Отмена") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setOnDismissListener { isResetDialogShown = false }
+            .show()
+    }
+
+    private fun render(state: SettingsViewState) {
+        if (state.isEditing) {
+            isUpdatingEditText = true
+            if (binding.nameEdit.text.toString() != state.name)
+                binding.nameEdit.setText(state.name)
+            if (binding.cupGoalEdit.text.toString() != (state.cupGoal?.toString() ?: ""))
+                binding.cupGoalEdit.setText(state.cupGoal?.toString() ?: "")
+            if (binding.monthlyCupGoalEdit.text.toString() != (state.monthlyCupGoal?.toString() ?: ""))
+                binding.monthlyCupGoalEdit.setText(state.monthlyCupGoal?.toString() ?: "")
+            if (binding.spendGoalEdit.text.toString() != (state.spendGoal?.let { formatMoney(it) } ?: ""))
+                binding.spendGoalEdit.setText(state.spendGoal?.let { formatMoney(it) } ?: "")
+            if (binding.monthlySpendGoalEdit.text.toString() != (state.monthlySpendGoal?.let { formatMoney(it) } ?: ""))
+                binding.monthlySpendGoalEdit.setText(state.monthlySpendGoal?.let { formatMoney(it) } ?: "")
+            isUpdatingEditText = false
+        }
+        // Текстовые значения всегда обновляем (можно не проверять на отличие)
+        binding.nameText.text = if (state.name.isNotBlank()) state.name else "Не задано"
+        binding.cupGoalText.text = state.cupGoal?.toString() ?: "Не задано"
+        binding.monthlyCupGoalText.text = state.monthlyCupGoal?.toString() ?: "Не задано"
+        binding.spendGoalText.text = state.spendGoal?.let { formatMoney(it) + " ₽" } ?: "Не задано"
+        binding.monthlySpendGoalText.text = state.monthlySpendGoal?.let { formatMoney(it) + " ₽" } ?: "Не задано"
+
+        setEditMode(state.isEditing)
+    }
+
+    private fun setEditMode(isEditing: Boolean) {
+        // TextView — просмотр, EditText — редактирование
+        binding.nameText.visibility = if (isEditing) View.GONE else View.VISIBLE
+        binding.nameEdit.visibility = if (isEditing) View.VISIBLE else View.GONE
+
+        binding.cupGoalText.visibility = if (isEditing) View.GONE else View.VISIBLE
+        binding.cupGoalEdit.visibility = if (isEditing) View.VISIBLE else View.GONE
+
+        binding.monthlyCupGoalText.visibility = if (isEditing) View.GONE else View.VISIBLE
+        binding.monthlyCupGoalEdit.visibility = if (isEditing) View.VISIBLE else View.GONE
+
+        binding.spendGoalText.visibility = if (isEditing) View.GONE else View.VISIBLE
+        binding.spendGoalEdit.visibility = if (isEditing) View.VISIBLE else View.GONE
+
+        binding.monthlySpendGoalText.visibility = if (isEditing) View.GONE else View.VISIBLE
+        binding.monthlySpendGoalEdit.visibility = if (isEditing) View.VISIBLE else View.GONE
+
+        binding.saveButton.visibility = if (isEditing) View.VISIBLE else View.GONE
+    }
+
+    private fun hideKeyboard() {
+        val view = activity?.currentFocus ?: view
+        view?.let {
+            val imm = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            imm.hideSoftInputFromWindow(it.windowToken, 0)
+        }
+    }
+
+    private fun formatMoney(value: Float): String {
+        return if (value == value.toInt().toFloat()) value.toInt().toString() else value.toString()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    fun <T> StateFlow<T>.collectOnLifecycle(fragment: Fragment, observer: (T) -> Unit) {
-        fragment.viewLifecycleOwner.lifecycleScope.launch {
-            fragment.viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
-                collect { observer(it) }
-            }
-        }
     }
 }

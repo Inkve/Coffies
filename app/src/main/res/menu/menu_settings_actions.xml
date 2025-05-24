@@ -11,9 +11,4 @@
         android:title="Сбросить настройки"
         android:icon="@drawable/ic_reset"
         app:showAsAction="never" />
-    <item
-        android:id="@+id/action_full_reset"
-        android:title="Полный сброс данных"
-        android:icon="@drawable/ic_delete"
-        app:showAsAction="never" />
 </menu>

@@ -14,13 +14,13 @@ android {
         minSdk = 28
         targetSdk = 34
         versionCode = 1
-        versionName = "0.2"
+        versionName = "0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -35,7 +35,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    buildFeatures {
+    buildFeatures.apply {
         viewBinding = true
     }
 

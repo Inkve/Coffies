@@ -7,21 +7,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.coffies.R
 import com.example.coffies.database.AppDatabase
-import com.example.coffies.database.coffeentry.CoffeeEntry
 import com.example.coffies.database.coffeetype.CoffeeType
 import com.example.coffies.databinding.FragmentCoffeeInputBinding
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 class CoffeeInputFragment : Fragment() {
 
@@ -33,11 +30,6 @@ class CoffeeInputFragment : Fragment() {
     }
 
     private var coffeeTypes: List<CoffeeType> = emptyList()
-    private var selectedType: CoffeeType? = null
-    private var userChangedVolume = false
-    private var userChangedCaffeine = false
-    private var userChangedDate = false
-    private var userChangedTime = false
     private var spinnerAdapter: ArrayAdapter<String>? = null
 
     override fun onCreateView(
@@ -51,15 +43,89 @@ class CoffeeInputFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Time picker
+        binding.addCoffeeType.setOnClickListener {
+            findNavController().navigate(R.id.action_main_to_addTypeCoffee)
+        }
+
+        lifecycleScope.launch {
+            coffeeTypes = viewModel.getCoffeeTypesOnce()
+            val names = coffeeTypes.map { it.name }
+            spinnerAdapter = ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_dropdown_item_1line,
+                names
+            )
+            binding.coffeeTypeSpinner.setAdapter(spinnerAdapter)
+        }
+
+        binding.coffeeTypeSpinner.setOnItemClickListener { _, _, position, _ ->
+            val type = coffeeTypes.getOrNull(position)
+            if (type != null) {
+                viewModel.onCoffeeTypeSelected(type)
+                binding.coffeeTypeInputLayout.isHintEnabled = false
+            }
+        }
+
+        binding.coffeeTypeSpinner.addTextChangedListener {
+            if (it.isNullOrEmpty()) {
+                binding.coffeeTypeInputLayout.isHintEnabled = true
+            }
+        }
+
+        binding.coffeeTypeSpinner.setOnClickListener {
+            if (coffeeTypes.isEmpty()) {
+                Toast.makeText(
+                    requireContext(),
+                    "Добавьте хотя бы один вид кофе для продолжения.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+        binding.coffeeTypeInputLayout.setEndIconOnClickListener {
+            if (coffeeTypes.isEmpty()) {
+                Toast.makeText(
+                    requireContext(),
+                    "Добавьте хотя бы один вид кофе для продолжения.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+        binding.volumeInput.addTextChangedListener {
+            viewModel.onFieldChanged("volume", it?.toString() ?: "")
+        }
+        binding.quantityValue.addTextChangedListener {
+            viewModel.onFieldChanged("quantity", it?.toString() ?: "")
+        }
+        binding.caffeineInput.addTextChangedListener {
+            viewModel.onFieldChanged("caffeine", it?.toString() ?: "")
+        }
+        binding.costInput.addTextChangedListener {
+            viewModel.onFieldChanged("cost", it?.toString() ?: "")
+        }
+        binding.dateInput.setOnClickListener {
+            val cal = Calendar.getInstance()
+            val dialog = DatePickerDialog(
+                requireContext(), R.style.CoffiesDialogTheme,
+                { _, y, mon, day ->
+                    val display = String.format("%02d.%02d.%04d", day, mon + 1, y)
+                    val iso = String.format("%04d-%02d-%02d", y, mon + 1, day)
+                    viewModel.onDatePicked(display, iso)
+                },
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)
+            )
+            dialog.datePicker.maxDate = System.currentTimeMillis()
+            dialog.show()
+        }
         binding.timeInput.setOnClickListener {
             val cal = Calendar.getInstance()
             TimePickerDialog(
                 requireContext(), R.style.CoffiesDialogTheme,
                 { _, h, m ->
                     val formatted = String.format("%02d:%02d", h, m)
-                    binding.timeInput.setText(formatted)
-                    userChangedTime = true
+                    viewModel.onTimePicked(formatted)
                 },
                 cal.get(Calendar.HOUR_OF_DAY),
                 cal.get(Calendar.MINUTE),
@@ -67,184 +133,90 @@ class CoffeeInputFragment : Fragment() {
             ).show()
         }
 
-        // Date picker (display dd.MM.yyyy, save yyyy-MM-dd)
-        binding.dateInput.setOnClickListener {
-            val cal = Calendar.getInstance()
-            DatePickerDialog(
-                requireContext(), R.style.CoffiesDialogTheme,
-                { _, y, mon, day ->
-                    // display
-                    val display = String.format("%02d.%02d.%04d", day, mon + 1, y)
-                    binding.dateInput.setText(display)
-                    // but store ISO internally in hidden tag
-                    binding.dateInput.tag = String.format("%04d-%02d-%02d", y, mon + 1, day)
-                    userChangedDate = true
-                },
-                cal.get(Calendar.YEAR),
-                cal.get(Calendar.MONTH),
-                cal.get(Calendar.DAY_OF_MONTH)
-            ).show()
+        binding.coffeeShopInput.addTextChangedListener {
+            viewModel.onFieldChanged("place", it?.toString() ?: "")
+        }
+        binding.commentInput.addTextChangedListener {
+            viewModel.onFieldChanged("comment", it?.toString() ?: "")
         }
 
-        // navigate to add type
-        binding.addButton.setOnClickListener {
-            findNavController().navigate(R.id.action_main_to_addTypeCoffee)
+        binding.quantityPlus.setOnClickListener {
+            val current = binding.quantityValue.text.toString().toIntOrNull() ?: 1
+            binding.quantityValue.setText((current + 1).toString())
         }
-
-        // spinner
-        lifecycleScope.launch {
-            coffeeTypes = viewModel.getCoffeeTypesOnce()
-            val names = listOf(getString(R.string.choose_coffee_type)) +
-                    coffeeTypes.map { it.name }
-            spinnerAdapter = ArrayAdapter(
-                requireContext(),
-                android.R.layout.simple_spinner_item,
-                names
-            ).apply {
-                setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        binding.quantityMinus.setOnClickListener {
+            val current = binding.quantityValue.text.toString().toIntOrNull() ?: 1
+            if (current > 1) {
+                binding.quantityValue.setText((current - 1).toString())
             }
-            binding.coffeeTypeSpinner.adapter = spinnerAdapter
-            binding.coffeeTypeSpinner.setSelection(0)
-        }
-
-        binding.coffeeTypeSpinner.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-                private var first = true
-                override fun onItemSelected(
-                    parent: AdapterView<*>,
-                    view: View?, pos: Int, id: Long
-                ) {
-                    selectedType = coffeeTypes.getOrNull(pos - 1)
-                    if (first) {
-                        first = false
-                    } else {
-                        spinnerAdapter?.notifyDataSetChanged()
-                    }
-                    selectedType?.let { type ->
-                        if (!userChangedVolume && type.default_volume_ml != null) {
-                            binding.volumeInput.setText(type.default_volume_ml.toString())
-                        }
-                        binding.quantityInput.setText("1")
-                        if (!userChangedDate) {
-                            // set today display + store tag
-                            val now = Calendar.getInstance().time
-                            val disp = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(now)
-                            val iso = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(now)
-                            binding.dateInput.setText(disp)
-                            binding.dateInput.tag = iso
-                        }
-                        if (!userChangedTime) {
-                            val now = Calendar.getInstance().time
-                            binding.timeInput.setText(SimpleDateFormat("HH:mm", Locale.getDefault()).format(now))
-                        }
-                        if (!userChangedCaffeine &&
-                            type.default_caffeine_mg_ml != null &&
-                            binding.volumeInput.text.toString().toIntOrNull() != null
-                        ) {
-                            recalculateCaffeine(force = true)
-                        }
-                    }
-                    userChangedCaffeine = false
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>) {}
-            }
-
-        binding.volumeInput.setOnFocusChangeListener { _, has ->
-            if (!has) {
-                userChangedVolume = true
-                userChangedCaffeine = false
-                recalculateCaffeine()
-            }
-        }
-        binding.caffeineInput.setOnFocusChangeListener { _, has ->
-            if (!has) userChangedCaffeine = true
         }
 
         binding.saveButton.setOnClickListener {
-            if (!validateFields()) return@setOnClickListener
+            viewModel.submit()
+        }
 
-            val coffeeTypeId = selectedType!!.id
-            val volume = binding.volumeInput.text.toString().toInt()
-            val quantity = binding.quantityInput.text.toString().toInt()
-            val caffeine = binding.caffeineInput.text.toString().replace(',', '.').toDouble()
-            val price = binding.costInput.text.toString().replace(',', '.').toDoubleOrNull()
-            // get ISO date from tag (fallback to parse display)
-            val isoDate = binding.dateInput.tag as? String ?: run {
-                val parts = binding.dateInput.text.toString().split(".")
-                String.format("%04d-%02d-%02d", parts[2].toInt(), parts[1].toInt(), parts[0].toInt())
-            }
-            val time = binding.timeInput.text.toString()
-            val place = binding.coffeeShopInput.text.toString().takeIf { it.isNotBlank() }
-            val comment = binding.commentInput.text.toString().takeIf { it.isNotBlank() }
+        lifecycleScope.launch {
+            viewModel.formState.collect { state ->
+                if (binding.coffeeTypeSpinner.text.toString() != state.coffeeType?.name.orEmpty()) {
+                    binding.coffeeTypeSpinner.setText(state.coffeeType?.name.orEmpty(), false)
+                    binding.coffeeTypeInputLayout.isHintEnabled = state.coffeeType?.name.isNullOrEmpty()
+                }
+                if (binding.volumeInput.text.toString() != state.volume) {
+                    binding.volumeInput.setText(state.volume)
+                }
+                if (binding.quantityValue.text.toString() != state.quantity) {
+                    binding.quantityValue.setText(state.quantity)
+                }
+                if (binding.caffeineInput.text.toString() != state.caffeine) {
+                    binding.caffeineInput.setText(state.caffeine)
+                }
+                if (binding.dateInput.text.toString() != state.date) {
+                    binding.dateInput.setText(state.date)
+                }
+                if (binding.timeInput.text.toString() != state.time) {
+                    binding.timeInput.setText(state.time)
+                }
+                if (binding.costInput.text.toString() != state.cost) {
+                    binding.costInput.setText(state.cost)
+                }
+                if (binding.coffeeShopInput.text.toString() != state.place) {
+                    binding.coffeeShopInput.setText(state.place)
+                }
+                if (binding.commentInput.text.toString() != state.comment) {
+                    binding.commentInput.setText(state.comment)
+                }
 
-            val entry = CoffeeEntry(
-                coffee_type_id = coffeeTypeId,
-                volume_ml = volume,
-                quantity = quantity,
-                caffeine_mg = caffeine,
-                price = price,
-                date = isoDate,
-                time = time,
-                place = place,
-                comment = comment
-            )
+                binding.coffeeTypeInputLayout.error = state.coffeeTypeError
+                binding.volumeInput.error = state.volumeError
+                binding.quantityValue.error = state.quantityError
+                binding.caffeineInput.error = state.caffeineError
+                binding.costInput.error = state.costError
+                binding.dateInput.error = state.dateError
+                binding.timeInput.error = state.timeError
 
-            viewModel.insertEntry(entry,
-                onSuccess = {
+                state.errorMsg?.let {
+                    Toast.makeText(requireContext(), "Ошибка при сохранении: $it", Toast.LENGTH_LONG).show()
+                }
+                if (state.success) {
                     clearFields()
                     Toast.makeText(requireContext(), R.string.saved, Toast.LENGTH_LONG).show()
-                },
-                onError = {
-                    Toast.makeText(requireContext(), "Ошибка при сохранении: ${it.message}", Toast.LENGTH_LONG).show()
-                })
+                    viewModel.clearSuccessFlag()
+                }
+            }
         }
-    }
-
-    private fun recalculateCaffeine(force: Boolean = false) {
-        val type = selectedType ?: return
-        val vol = binding.volumeInput.text.toString().toIntOrNull() ?: return
-        if (userChangedCaffeine && !force) return
-        val caf = vol * (type.default_caffeine_mg_ml ?: 0f)
-        binding.caffeineInput.setText(String.format("%.1f", caf))
     }
 
     private fun clearFields() {
-        binding.apply {
-            volumeInput.text?.clear()
-            caffeineInput.text?.clear()
-            costInput.text?.clear()
-            timeInput.text?.clear()
-            dateInput.text?.clear()
-            dateInput.tag = null
-            coffeeShopInput.text?.clear()
-            commentInput.text?.clear()
-            coffeeTypeSpinner.setSelection(0)
-            quantityInput.setText("1")
-        }
-        userChangedVolume = false
-        userChangedCaffeine = false
-        userChangedDate = false
-        userChangedTime = false
-        selectedType = null
-    }
-
-    private fun validateFields(): Boolean {
-        var ok = true
-        if (binding.coffeeTypeSpinner.selectedItemPosition == 0) {
-            Toast.makeText(requireContext(), R.string.need_choose_coffee_type, Toast.LENGTH_LONG).show()
-            ok = false
-        }
-        listOf(binding.volumeInput, binding.quantityInput, binding.caffeineInput, binding.costInput,
-            binding.dateInput, binding.timeInput).forEach { edit ->
-            if (edit.text.isNullOrBlank()) {
-                edit.error = getString(R.string.field_required)
-                ok = false
-            } else {
-                edit.error = null
-            }
-        }
-        return ok
+        binding.coffeeTypeSpinner.setText("")
+        binding.volumeInput.text?.clear()
+        binding.caffeineInput.text?.clear()
+        binding.costInput.text?.clear()
+        binding.timeInput.text?.clear()
+        binding.dateInput.text?.clear()
+        binding.dateInput.tag = null
+        binding.coffeeShopInput.text?.clear()
+        binding.commentInput.text?.clear()
+        binding.quantityValue.setText("1")
     }
 
     override fun onDestroyView() {

@@ -6,261 +6,222 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.icu.util.Calendar
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.coffies.R
 import com.example.coffies.database.AppDatabase
-import com.example.coffies.database.coffeentry.CoffeeEntry
-import com.example.coffies.databinding.DialogCoffeeEntrySelectBinding
 import com.example.coffies.databinding.FragmentMoodInputBinding
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
 
 class MoodInputFragment : Fragment() {
 
     private var _binding: FragmentMoodInputBinding? = null
     private val binding get() = _binding!!
-
     private val viewModel: MoodInputViewModel by viewModels {
         MoodInputViewModelFactory(AppDatabase.getInstance(requireContext()))
     }
 
-    private var selectedMood = 3
-    private var selectedMoment: String? = null
-    private var selectedCoffeeEntry: CoffeeEntry? = null
-
-    private var isoDate: String = ""
-    private var time: String = ""
-
-    private var userChangedDate = false
-    private var userChangedTime = false
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMoodInputBinding.inflate(inflater, container, false)
         return binding.root
     }
 
-    override fun onViewCreated(view: View, saved: Bundle?) {
-        super.onViewCreated(view, saved)
-        setupMoodSelection()
-        setupMomentSelection()
-        setupDateTimeDefaults()
-        setupPickers()
-        setupLinkedCoffee()
-        setupSaveButton()
-    }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        prefillFromArguments()
+        observeState()
 
-    private fun setupMoodSelection() {
-        updateMoodUI()
-        binding.apply {
-            mood1.setOnClickListener { selectMood(1) }
-            mood2.setOnClickListener { selectMood(2) }
-            mood3.setOnClickListener { selectMood(3) }
-            mood4.setOnClickListener { selectMood(4) }
-            mood5.setOnClickListener { selectMood(5) }
+        // Эмоции
+        listOf(binding.mood1, binding.mood2, binding.mood3, binding.mood4, binding.mood5).forEachIndexed { idx, iv ->
+            iv.setOnClickListener { viewModel.onMoodSelected(idx + 1) }
         }
-    }
 
-    private fun selectMood(level: Int) {
-        selectedMood = level
-        updateMoodUI()
-        binding.moodError.visibility = View.GONE
-    }
+        // По умолчанию выбран "До"
+        binding.momentRadioGroup.check(R.id.moment_before)
 
-    private fun updateMoodUI() {
-        binding.apply {
-            listOf(mood1, mood2, mood3, mood4, mood5).forEachIndexed { idx, iv ->
-                iv.isSelected = idx + 1 == selectedMood
-                iv.background = if (iv.isSelected)
-                    ContextCompat.getDrawable(requireContext(), R.drawable.mood_selector_bg)
-                else null
-            }
-        }
-    }
-
-    private fun setupMomentSelection() {
-        binding.momentRadioGroup.setOnCheckedChangeListener { _, id ->
-            selectedMoment = when (id) {
-                R.id.moment_before -> "before and during"
-                R.id.moment_after -> "after"
+        // Момент
+        binding.momentRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            val moment = when (checkedId) {
+                R.id.moment_before -> MoodMomentType.BEFORE
+                R.id.moment_after -> MoodMomentType.AFTER
                 else -> null
             }
-            binding.momentError.visibility = View.GONE
-            if (!userChangedDate && !userChangedTime) setupDateTimeDefaults()
+            viewModel.onMomentSelected(moment)
         }
+
+        // Связанный прием кофе (стрелка уже в layout через endIconMode)
+        binding.relatedEntryInputLayout.setEndIconOnClickListener { showCoffeeDialog() }
+        binding.relatedEntrySpinner.setOnClickListener { showCoffeeDialog() }
+
+        // Для исчезновения подсказки после выбора
+        binding.relatedEntrySpinner.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus && binding.relatedEntrySpinner.text.isEmpty()) {
+                binding.relatedEntrySpinner.setText("")
+            }
+        }
+
+        // Дата/время
+        binding.dateInput.setOnClickListener { showDatePicker() }
+        binding.timeInput.setOnClickListener { showTimePicker() }
+
+        // Комментарий
+        binding.commentInput.addTextChangedListener { viewModel.onCommentChanged(it?.toString() ?: "") }
+
+        // Сохранить
+        binding.saveButton.setOnClickListener { viewModel.submit() }
     }
 
-    private fun setupDateTimeDefaults() {
-        val now = Calendar.getInstance().time
-        if (!userChangedDate) {
-            binding.dateInput.setText(SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(now))
-            isoDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(now)
+    private fun prefillFromArguments() {
+        val args = arguments ?: return
+
+        val relatedCoffeeId = args.getInt("relatedCoffeeId", -1).takeIf { it > 0 }
+        val relatedCoffeeTime = args.getString("relatedCoffeeTime")
+        val relatedCoffeeDate = args.getString("relatedCoffeeDate")
+        val momentTypeStr = args.getString("momentType")
+        val momentType = when (momentTypeStr) {
+            "before and during", "before", "BEFORE" -> MoodMomentType.BEFORE
+            "after", "AFTER" -> MoodMomentType.AFTER
+            else -> null
         }
-        if (!userChangedTime) {
-            binding.timeInput.setText(SimpleDateFormat("HH:mm", Locale.getDefault()).format(now))
-            time = binding.timeInput.text.toString()
-        }
+
+        viewModel.prefill(relatedCoffeeId, relatedCoffeeTime, relatedCoffeeDate, momentType)
     }
 
-    private fun setupPickers() {
-        binding.dateInput.setOnClickListener {
-            val cal = Calendar.getInstance()
-            DatePickerDialog(
-                requireContext(),
-                R.style.CoffiesDialogTheme,
-                { _, y, m, d ->
-                    binding.dateInput.setText(String.format("%02d.%02d.%04d", d, m + 1, y))
-                    isoDate = String.format("%04d-%02d-%02d", y, m + 1, d)
-                    binding.dateError.visibility = View.GONE
-                    userChangedDate = true
-                },
-                cal.get(Calendar.YEAR),
-                cal.get(Calendar.MONTH),
-                cal.get(Calendar.DAY_OF_MONTH)
-            ).show()
-        }
 
-        binding.timeInput.setOnClickListener {
-            val cal = Calendar.getInstance()
-            TimePickerDialog(
-                requireContext(),
-                R.style.CoffiesDialogTheme,
-                { _, h, min ->
-                    binding.timeInput.setText(String.format("%02d:%02d", h, min))
-                    time = String.format("%02d:%02d", h, min)
-                    binding.timeError.visibility = View.GONE
-                    userChangedTime = true
-                },
-                cal.get(Calendar.HOUR_OF_DAY),
-                cal.get(Calendar.MINUTE),
-                true
-            ).show()
-        }
-    }
+    private fun observeState() {
+        lifecycleScope.launch {
+            viewModel.formState.collect { st ->
+                // Эмоции
+                listOf(binding.mood1, binding.mood2, binding.mood3, binding.mood4, binding.mood5).forEachIndexed { idx, iv ->
+                    iv.isSelected = idx + 1 == st.moodLevel
+                    iv.background = if (iv.isSelected) ContextCompat.getDrawable(requireContext(), R.drawable.mood_selector_background) else null
+                }
+                // Момент
+                binding.momentRadioGroup.check(
+                    when (st.momentType) {
+                        MoodMomentType.BEFORE -> R.id.moment_before
+                        MoodMomentType.AFTER -> R.id.moment_after
+                        else -> -1
+                    }
+                )
+                // Связанный приём кофе — подсказка исчезает после выбора, появляется после сброса
+                val relatedText = st.relatedCoffeeId?.let { id ->
+                    st.coffeeList.firstOrNull { it.id == id }?.let { entry ->
+                        val typeName = st.coffeeTypeNameMap[entry.coffee_type_id] ?: "Тип ${entry.coffee_type_id}"
+                        val displayDate = entry.date.split("-").let {
+                            if (it.size == 3) "${it[2]}.${it[1]}.${it[0]}" else entry.date
+                        }
+                        "$typeName • ${entry.volume_ml} мл • ${entry.time} $displayDate"
+                    }
+                } ?: ""
+                if (relatedText.isEmpty() && binding.relatedEntrySpinner.text.isNotEmpty()) {
+                    binding.relatedEntrySpinner.setText("")
+                }
+                if (relatedText.isNotEmpty() && binding.relatedEntrySpinner.text.toString() != relatedText) {
+                    binding.relatedEntrySpinner.setText(relatedText, false)
+                }
+                // Подсказку "Выберите приём кофе" показываем только если поле пустое и ничего не выбрано
+                if (relatedText.isEmpty()) {
+                    binding.relatedEntrySpinner.hint = "Выберите приём кофе"
+                } else {
+                    binding.relatedEntrySpinner.hint = ""
+                }
 
-    private fun setupLinkedCoffee() {
-        binding.linkedCoffeeField.setOnClickListener {
-            showCoffeeDialog()
+                // Дата/время/комментарий
+                binding.dateInput.setText(st.displayDate)
+                binding.timeInput.setText(st.time)
+                if (binding.commentInput.text.toString() != st.comment) {
+                    binding.commentInput.setText(st.comment)
+                    binding.commentInput.setSelection(st.comment.length)
+                }
+
+                // Ошибки
+                binding.moodError.text = st.moodError
+                binding.moodError.visibility = if (st.moodError != null) View.VISIBLE else View.GONE
+                binding.momentError.text = st.momentError
+                binding.momentError.visibility = if (st.momentError != null) View.VISIBLE else View.GONE
+                binding.relatedCoffeeError.text = st.relatedCoffeeError
+                binding.relatedCoffeeError.visibility = if (st.relatedCoffeeError != null) View.VISIBLE else View.GONE
+
+                // Общая ошибка по дате/времени
+                val datetimeError = st.dateError ?: st.timeError
+                binding.datetimeError.text = datetimeError
+                binding.datetimeError.visibility = if (datetimeError != null) View.VISIBLE else View.GONE
+
+                // После сохранения — очистка формы и выпадающего текста
+                if (st.success) {
+                    Toast.makeText(requireContext(), "Настроение успешно сохранено", Toast.LENGTH_SHORT).show()
+                    binding.relatedEntrySpinner.setText("", false)
+                    binding.relatedEntrySpinner.hint = "Выберите приём кофе"
+                    viewModel.resetForm()
+                }
+            }
         }
     }
 
     private fun showCoffeeDialog() {
-        val dialogBinding = DialogCoffeeEntrySelectBinding.inflate(layoutInflater)
-        val dialog = AlertDialog.Builder(requireContext(), R.style.CoffiesDialogTheme)
-            .setTitle(R.string.mood_linked_coffee_choose)
-            .setView(dialogBinding.root)
-            .setNegativeButton(android.R.string.cancel, null)
-            .create()
-
-        val adapter = CoffeeEntryShortAdapter(
-            entries = emptyList(),
-            getCoffeeTypeName = { id -> viewModel.getCoffeeTypeName(id) }
-        ) { entry ->
-            selectedCoffeeEntry = entry
-            val name = viewModel.getCoffeeTypeName(entry.coffee_type_id)
-            binding.linkedCoffeeText.text = "$name • ${entry.volume_ml} мл • ${entry.date} ${entry.time}"
-            binding.linkedCoffeeError.visibility = View.GONE
-            dialog.dismiss()
+        val st = viewModel.formState.value
+        val context = requireContext()
+        val list = st.coffeeList
+        if (list.isEmpty()) {
+            Toast.makeText(context, "Нет подходящих приемов кофе", Toast.LENGTH_SHORT).show()
+            return
         }
-
-        dialogBinding.coffeeEntriesList.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            this.adapter = adapter
-        }
-
-        lifecycleScope.launch {
-            viewModel.lastCoffeeEntriesFlow.collectLatest { list ->
-                Log.d("CoffeeDialog", "Обновляем адаптер, записей: ${list.size}")
-                adapter.updateData(list)
+        val items = list.map { entry ->
+            val typeName = st.coffeeTypeNameMap[entry.coffee_type_id] ?: "Тип ${entry.coffee_type_id}"
+            val displayDate = entry.date.split("-").let {
+                if (it.size == 3) "${it[2]}.${it[1]}.${it[0]}" else entry.date
             }
-        }
+            "$typeName • ${entry.volume_ml} мл • ${entry.time} $displayDate"
+        }.toTypedArray()
 
+        AlertDialog.Builder(context)
+            .setTitle("Выберите прием кофе")
+            .setItems(items) { _, which ->
+                viewModel.onRelatedCoffeeSelected(list[which])
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showDatePicker() {
+        val now = Calendar.getInstance()
+        val dialog = DatePickerDialog(
+            requireContext(),
+            R.style.CoffiesDialogTheme,
+            { _, y, m, d ->
+                val display = String.format("%02d.%02d.%04d", d, m + 1, y)
+                val iso = String.format("%04d-%02d-%02d", y, m + 1, d)
+                viewModel.onDateChanged(display, iso)
+            },
+            now.get(Calendar.YEAR),
+            now.get(Calendar.MONTH),
+            now.get(Calendar.DAY_OF_MONTH)
+        )
+        dialog.datePicker.maxDate = System.currentTimeMillis()
         dialog.show()
     }
 
-    private fun setupSaveButton() {
-        binding.saveButton.setOnClickListener {
-            if (!validateInputs()) return@setOnClickListener
-
-            viewModel.saveMoodWithCoffeeLink(
-                moodLevel = selectedMood,
-                date = isoDate,
-                time = time,
-                comment = binding.commentInput.text.toString().takeIf { it.isNotBlank() },
-                coffeeEntryId = selectedCoffeeEntry!!.id,
-                relationType = selectedMoment!!,
-                onSuccess = {
-                    Toast.makeText(requireContext(), R.string.mood_save_success, Toast.LENGTH_LONG).show()
-                    resetForm()
-                },
-                onError = {
-                    Toast.makeText(requireContext(), "Ошибка", Toast.LENGTH_LONG).show()
-                }
-            )
-        }
-    }
-
-    private fun resetForm() {
-        selectedMood = 3
-        updateMoodUI()
-        selectedMoment = null
-        binding.momentRadioGroup.clearCheck()
-        selectedCoffeeEntry = null
-        binding.linkedCoffeeText.setText(R.string.mood_linked_coffee_choose)
-        binding.linkedCoffeeError.visibility = View.GONE
-        binding.commentInput.text?.clear()
-        userChangedDate = false
-        userChangedTime = false
-        setupDateTimeDefaults()
-    }
-
-    private fun validateInputs(): Boolean {
-        var valid = true
-
-        if (selectedMood !in 1..5) {
-            binding.moodError.text = getString(R.string.mood_error_required)
-            binding.moodError.visibility = View.VISIBLE
-            valid = false
-        } else binding.moodError.visibility = View.GONE
-
-        if (selectedMoment == null) {
-            binding.momentError.text = getString(R.string.mood_moment_error_required)
-            binding.momentError.visibility = View.VISIBLE
-            valid = false
-        } else binding.momentError.visibility = View.GONE
-
-        if (selectedCoffeeEntry == null) {
-            binding.linkedCoffeeError.text = getString(R.string.mood_linked_coffee_error_required)
-            binding.linkedCoffeeError.visibility = View.VISIBLE
-            valid = false
-        } else binding.linkedCoffeeError.visibility = View.GONE
-
-        if (binding.dateInput.text.isNullOrBlank()) {
-            binding.dateError.text = getString(R.string.mood_date_error_required)
-            binding.dateError.visibility = View.VISIBLE
-            valid = false
-        } else binding.dateError.visibility = View.GONE
-
-        if (binding.timeInput.text.isNullOrBlank()) {
-            binding.timeError.text = getString(R.string.mood_time_error_required)
-            binding.timeError.visibility = View.VISIBLE
-            valid = false
-        } else binding.timeError.visibility = View.GONE
-
-        return valid
+    private fun showTimePicker() {
+        val now = Calendar.getInstance()
+        val dialog = TimePickerDialog(
+            requireContext(),
+            R.style.CoffiesDialogTheme,
+            { _, h, min ->
+                val formatted = String.format("%02d:%02d", h, min)
+                viewModel.onTimeChanged(formatted)
+            },
+            now.get(Calendar.HOUR_OF_DAY),
+            now.get(Calendar.MINUTE),
+            true
+        )
+        dialog.show()
     }
 
     override fun onDestroyView() {

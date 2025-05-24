@@ -12,16 +12,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.math.ceil
 
-data class MainScreenStats(
-    val cupsCount: Int,
-    val caffeine: Int,
-    val totalSpent: Double,
-    val avgMood: Int,
-    val recommendations: List<String>,
-    val cupGoal: Int? = null,
-    val spendGoal: Float? = null
-)
-
 class MainViewModel(private val db: AppDatabase) : ViewModel() {
     private val _stats = MutableStateFlow<MainScreenStats?>(null)
     val stats: StateFlow<MainScreenStats?> = _stats
@@ -29,25 +19,27 @@ class MainViewModel(private val db: AppDatabase) : ViewModel() {
     fun loadStatsForToday() {
         viewModelScope.launch(Dispatchers.IO) {
             val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
+
+            // Получаем данные только за сегодня
             val cups = db.coffeeEntryDao().getCupsCountForDate(today)
             val caffeine = db.coffeeEntryDao().getTotalCaffeineForDate(today)
             val spent = db.coffeeEntryDao().getTotalSpentForDate(today)
             val moodRaw = db.moodEntryDao().getAverageMoodLevelForDate(today) ?: 0.0
-            val avgMood = ceil(moodRaw).toInt().coerceAtLeast(0)
+            val avgMood = ceil(moodRaw).toInt().takeIf { it > 0 }
+
+            // Цели пользователя
             val settings = db.userSettingsDao().getSettingsOnce()
             val cupGoal = settings?.daily_cup_goal
             val spendGoal = settings?.daily_spend_goal
 
-            val recommendations = listOf(
-                "Пейте больше воды между чашками кофе!",
-                "Держите баланс: не превышайте дневную норму кофеина.",
-                "Попробуйте новые сорта кофе для разнообразия."
-            )
+            // В будущем будут рекомендации, сейчас пусть пусто
+            val recommendations = emptyList<String>()
 
+            // Заполняем состояние
             _stats.value = MainScreenStats(
-                cupsCount = cups,
-                caffeine = caffeine.toInt(),
-                totalSpent = spent,
+                cupsCount = if (cups == 0) null else cups,
+                caffeine = if (caffeine == 0.0) null else caffeine.toInt(),
+                totalSpent = if (spent == 0.0) null else spent,
                 avgMood = avgMood,
                 recommendations = recommendations,
                 cupGoal = cupGoal,
@@ -55,6 +47,4 @@ class MainViewModel(private val db: AppDatabase) : ViewModel() {
             )
         }
     }
-
 }
-

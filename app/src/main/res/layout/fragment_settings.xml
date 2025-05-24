@@ -1,133 +1,277 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
-    android:padding="16dp">
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
+    android:clipToPadding="false"
+    android:clipChildren="false">
 
     <LinearLayout
-        android:orientation="vertical"
-        android:background="@drawable/rounded_corners"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
 
-        <!-- Аватар и имя -->
-        <LinearLayout
-            android:orientation="horizontal"
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:id="@+id/avatar_image"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:importantForAccessibility="no"
-                android:src="@drawable/ic_avatar_placeholder"
-                android:background="@drawable/rounded_corners"
-                android:scaleType="centerCrop"
-                android:clickable="true"
-                android:focusable="true"
-                android:layout_marginEnd="16dp" />
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="7dp"
+            app:cardBackgroundColor="@color/light_beige">
 
             <LinearLayout
+                android:id="@+id/content_container"
                 android:orientation="vertical"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1">
+                android:padding="20dp">
 
+                <!-- Имя -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Имя"
+                    android:text="@string/name_label"
                     android:textColor="@color/black"
                     android:textStyle="bold"
-                    android:textSize="14sp"
+                    android:textSize="15sp"
                     android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/name_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="@color/black"
+                    android:textSize="17sp"
+                    android:background="@android:color/transparent"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:layout_marginBottom="4dp"
+                    android:visibility="visible"
+                    android:gravity="start"
+                    android:fontFamily="sans-serif-medium"
+                    android:drawableBottom="@drawable/field_underline" />
 
                 <EditText
                     android:id="@+id/name_edit"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/no_data"
-                    android:inputType="textPersonName"
+                    android:layout_height="35dp"
+                    android:hint="Введите имя"
+                    android:inputType="textPersonName|textCapSentences"
                     android:textColor="@color/black"
-                    android:textColorHint="@color/gray" />
+                    android:textColorHint="@color/gray"
+                    android:background="@drawable/rounded_corners_white_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone"
+                    android:maxLength="20" />
+
+                <!-- Разделитель -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/light_gray"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp" />
+
+                <!-- Цели по чашкам -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Цель по чашкам в день"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:textSize="15sp"
+                    android:layout_marginBottom="4dp"/>
+                <TextView
+                    android:id="@+id/cup_goal_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="@color/black"
+                    android:textSize="17sp"
+                    android:background="@android:color/transparent"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:layout_marginBottom="4dp"
+                    android:visibility="visible"
+                    android:gravity="start"
+                    android:fontFamily="sans-serif-medium"
+                    android:drawableBottom="@drawable/field_underline" />
+                <EditText
+                    android:id="@+id/cup_goal_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="35dp"
+                    android:hint="Введите количество"
+                    android:inputType="number"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/gray"
+                    android:background="@drawable/rounded_corners_white_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone"
+                    android:maxLength="2"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Цель по чашкам в месяц"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:textSize="15sp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="4dp"/>
+                <TextView
+                    android:id="@+id/monthly_cup_goal_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="@color/black"
+                    android:textSize="17sp"
+                    android:background="@android:color/transparent"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:layout_marginBottom="4dp"
+                    android:visibility="visible"
+                    android:gravity="start"
+                    android:fontFamily="sans-serif-medium"
+                    android:drawableBottom="@drawable/field_underline" />
+                <EditText
+                    android:id="@+id/monthly_cup_goal_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="35dp"
+                    android:hint="Введите количество"
+                    android:inputType="number"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/gray"
+                    android:background="@drawable/rounded_corners_white_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone"
+                    android:maxLength="3"/>
+
+                <!-- Разделитель -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/light_gray"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp" />
+
+                <!-- Цели по расходам -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Цель по расходам в день (₽)"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:textSize="15sp"
+                    android:layout_marginBottom="4dp"/>
+                <TextView
+                    android:id="@+id/spend_goal_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="@color/black"
+                    android:textSize="17sp"
+                    android:background="@android:color/transparent"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:layout_marginBottom="4dp"
+                    android:visibility="visible"
+                    android:gravity="start"
+                    android:fontFamily="sans-serif-medium"
+                    android:drawableBottom="@drawable/field_underline" />
+                <EditText
+                    android:id="@+id/spend_goal_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="35dp"
+                    android:hint="Введите сумму"
+                    android:inputType="numberDecimal"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/gray"
+                    android:background="@drawable/rounded_corners_white_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone"
+                    android:maxLength="5"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Цель по расходам в месяц (₽)"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:textSize="15sp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="4dp"/>
+                <TextView
+                    android:id="@+id/monthly_spend_goal_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="—"
+                    android:textColor="@color/black"
+                    android:textSize="17sp"
+                    android:background="@android:color/transparent"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:layout_marginBottom="4dp"
+                    android:visibility="visible"
+                    android:gravity="start"
+                    android:fontFamily="sans-serif-medium"
+                    android:drawableBottom="@drawable/field_underline" />
+                <EditText
+                    android:id="@+id/monthly_spend_goal_edit"
+                    android:layout_width="match_parent"
+                    android:layout_height="35dp"
+                    android:hint="Введите сумму"
+                    android:inputType="numberDecimal"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/gray"
+                    android:background="@drawable/rounded_corners_white_background"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:layout_marginBottom="10dp"
+                    android:visibility="gone"
+                    android:maxLength="10"/>
             </LinearLayout>
-        </LinearLayout>
-
-        <!-- Возраст и дата рождения -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Дата рождения"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="4dp"/>
-
-        <TextView
-            android:id="@+id/age_value"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="—"
-            android:textColor="@color/black"
-            android:textSize="16sp"
-            android:background="?android:attr/selectableItemBackground"
-            android:padding="8dp"
-            android:clickable="true" />
-
-        <!-- Цель по чашкам -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Цель по чашкам в день"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="4dp"/>
-
-        <EditText
-            android:id="@+id/cup_goal_edit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/no_data"
-            android:inputType="number"
-            android:textColor="@color/black"
-            android:textColorHint="@color/gray" />
-
-        <!-- Цель по расходам -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Цель по расходам в день"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="4dp"/>
-
-        <EditText
-            android:id="@+id/spend_goal_edit"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/no_data"
-            android:inputType="numberDecimal"
-            android:textColor="@color/black"
-            android:textColorHint="@color/gray" />
+        </androidx.cardview.widget.CardView>
 
         <Button
             android:id="@+id/save_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Сохранить"
-            android:layout_marginTop="24dp"
+            android:textStyle="bold"
+            android:textSize="17sp"
             android:backgroundTint="@color/dark_beige"
             android:textColor="@color/brown"
-            android:visibility="gone" />
-
+            android:visibility="gone"
+            android:elevation="2dp"
+            android:layout_marginTop="0dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_marginBottom="2dp"
+            android:textAllCaps="false"
+            android:fontFamily="sans-serif-medium"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>
