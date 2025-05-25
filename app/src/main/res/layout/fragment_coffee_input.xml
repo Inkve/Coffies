@@ -65,7 +65,8 @@
                         app:boxCornerRadiusBottomEnd="12dp"
                         app:boxStrokeWidth="0dp"
                         app:boxStrokeColor="@android:color/transparent"
-                        app:endIconMode="dropdown_menu">
+                        app:endIconMode="dropdown_menu"
+                        android:inputType="none">
 
                         <AutoCompleteTextView
                             android:id="@+id/coffee_type_spinner"

@@ -58,6 +58,23 @@ class CoffeeInputFragment : Fragment() {
             binding.coffeeTypeSpinner.setAdapter(spinnerAdapter)
         }
 
+        // Обработка кликов: поле, стрелка, сам спиннер
+        fun handleCoffeeTypeClick() {
+            if (coffeeTypes.isEmpty()) {
+                Toast.makeText(
+                    requireContext(),
+                    "Добавьте хотя бы один вид кофе для продолжения.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                binding.coffeeTypeSpinner.showDropDown()
+            }
+        }
+
+        binding.coffeeTypeInputLayout.setOnClickListener { handleCoffeeTypeClick() }
+        binding.coffeeTypeInputLayout.setEndIconOnClickListener { handleCoffeeTypeClick() }
+        binding.coffeeTypeSpinner.setOnClickListener { handleCoffeeTypeClick() }
+
         binding.coffeeTypeSpinner.setOnItemClickListener { _, _, position, _ ->
             val type = coffeeTypes.getOrNull(position)
             if (type != null) {
@@ -69,25 +86,6 @@ class CoffeeInputFragment : Fragment() {
         binding.coffeeTypeSpinner.addTextChangedListener {
             if (it.isNullOrEmpty()) {
                 binding.coffeeTypeInputLayout.isHintEnabled = true
-            }
-        }
-
-        binding.coffeeTypeSpinner.setOnClickListener {
-            if (coffeeTypes.isEmpty()) {
-                Toast.makeText(
-                    requireContext(),
-                    "Добавьте хотя бы один вид кофе для продолжения.",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-        binding.coffeeTypeInputLayout.setEndIconOnClickListener {
-            if (coffeeTypes.isEmpty()) {
-                Toast.makeText(
-                    requireContext(),
-                    "Добавьте хотя бы один вид кофе для продолжения.",
-                    Toast.LENGTH_SHORT
-                ).show()
             }
         }
 

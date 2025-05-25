@@ -7,5 +7,6 @@ data class MainScreenStats(
     val avgMood: Int? = null,
     val recommendations: List<String> = emptyList(),
     val cupGoal: Int? = null,
-    val spendGoal: Float? = null
+    val spendGoal: Float? = null,
+    val userName: String? = null
 )

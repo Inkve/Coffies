@@ -35,6 +35,9 @@ interface CoffeeEntryDao {
     @Query("SELECT coalesce(SUM(coalesce(price,0)), 0) FROM coffee_entries WHERE date = :today")
     suspend fun getTotalSpentForDate(today: String): Double
 
+    @Query("SELECT * FROM coffee_entries WHERE date BETWEEN :from AND :to")
+    suspend fun getAllBetweenDates(from: String, to: String): List<CoffeeEntry>
+
     @Delete
     suspend fun delete(entry: CoffeeEntry)
 

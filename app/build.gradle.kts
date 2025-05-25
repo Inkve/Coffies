@@ -74,4 +74,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx.v290)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }

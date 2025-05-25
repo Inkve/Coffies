@@ -17,9 +17,6 @@ interface MoodEntryDao {
     @Query("SELECT * FROM mood_entries WHERE id = :id")
     suspend fun getById(id: Int): MoodEntry?
 
-    @Query("SELECT * FROM mood_entries ORDER BY date DESC, time DESC LIMIT 1")
-    suspend fun getLastMood(): MoodEntry?
-
     @Query("""
         SELECT * FROM mood_entries
         WHERE date >= :from AND date <= :to
@@ -29,6 +26,9 @@ interface MoodEntryDao {
         from: String,
         to: String
     ): List<MoodEntry>
+
+    @Query("SELECT * FROM mood_entries WHERE date BETWEEN :from AND :to")
+    suspend fun getAllBetweenDates(from: String, to: String): List<MoodEntry>
 
 
     @Query("SELECT AVG(mood_level) FROM mood_entries WHERE date = :today")

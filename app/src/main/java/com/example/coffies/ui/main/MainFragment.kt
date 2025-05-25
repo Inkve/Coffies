@@ -92,6 +92,11 @@ class MainFragment : Fragment() {
                         if (stats?.spendGoal != null) "/ %.2f ₽".format(stats.spendGoal) else "/ " + getString(R.string.infinity)
                     binding.spentLimitText.setTextColor(if (isSpendExceeded) colorRed else colorBlack)
 
+                    binding.recommendationTitle.text = if (!stats?.userName.isNullOrBlank()) {
+                        "${stats!!.userName}, вот ваши рекомендации дня"
+                    } else {
+                        "Рекомендации дня"
+                    }
                     recAdapter.updateFromStats(stats)
                 }
             }

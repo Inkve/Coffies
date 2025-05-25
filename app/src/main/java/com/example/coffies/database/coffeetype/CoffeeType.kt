@@ -10,3 +10,8 @@ data class CoffeeType(
     val default_volume_ml: Int?,
     val default_caffeine_mg_ml: Float?
 )
+
+data class CoffeeTypeIdName(
+    val id: Int,
+    val name: String
+)

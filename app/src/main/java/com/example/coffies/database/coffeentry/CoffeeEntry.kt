@@ -29,3 +29,6 @@ data class CoffeeEntry(
     val place: String?,
     val comment: String?
 )
+
+data class CaffeineDay(val date: String, val caffeine: Double)
+data class CupsDay(val date: String, val cups: Int)
