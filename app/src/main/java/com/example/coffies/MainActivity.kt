@@ -6,7 +6,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
+import com.example.coffies.database.AppDatabase
+import com.example.coffies.database.coffeetype.insertDefaultCoffeeTypesIfNeeded
 import com.example.coffies.databinding.ActivityMainBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -17,6 +22,11 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val db = AppDatabase.getInstance(this)
+        CoroutineScope(Dispatchers.IO).launch {
+            insertDefaultCoffeeTypesIfNeeded(db)
+        }
 
         val navView: BottomNavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_activity_main)

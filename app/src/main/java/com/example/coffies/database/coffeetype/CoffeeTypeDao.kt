@@ -15,6 +15,12 @@ interface CoffeeTypeDao {
     @Query("SELECT id, name FROM coffee_types")
     suspend fun getAllCoffeeTypeNames(): List<CoffeeTypeIdName>
 
+    @Query("SELECT COUNT(*) FROM coffee_types")
+    suspend fun getCount(): Int
+
+    @Insert
+    suspend fun insertAll(types: List<CoffeeType>)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(coffeeType: CoffeeType): Long
 
