@@ -141,7 +141,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/time"
+                        android:text="@string/time_label"
                         android:textStyle="bold"
                         android:textColor="@color/black"
                         android:textSize="16sp"/>
@@ -162,7 +162,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/date"
+                        android:text="@string/date_label"
                         android:textStyle="bold"
                         android:textColor="@color/black"
                         android:textSize="16sp"/>
@@ -204,7 +204,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/comment"
+                        android:text="@string/comment_label"
                         android:textStyle="bold"
                         android:textColor="@color/black"
                         android:textSize="16sp"/>

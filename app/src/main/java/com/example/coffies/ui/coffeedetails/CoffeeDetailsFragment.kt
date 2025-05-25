@@ -138,7 +138,7 @@ class CoffeeDetailsFragment : Fragment() {
             )
             icon.setImageResource(moodLevelToDrawable(mood.mood_level))
         } else {
-            value.text = getString(R.string.mood_unknown)
+            value.text = getString(R.string.no_data)
             icon.setImageResource(R.drawable.mood_3)
         }
     }
@@ -159,7 +159,7 @@ class CoffeeDetailsFragment : Fragment() {
             3 -> getString(R.string.mood_3_short)
             4 -> getString(R.string.mood_4_short)
             5 -> getString(R.string.mood_5_short)
-            else -> getString(R.string.mood_unknown)
+            else -> getString(R.string.no_data)
         }
     }
 

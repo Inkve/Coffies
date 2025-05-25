@@ -95,7 +95,7 @@ class MainFragment : Fragment() {
                     binding.recommendationTitle.text = if (!stats?.userName.isNullOrBlank()) {
                         "${stats!!.userName}, вот ваши рекомендации дня"
                     } else {
-                        "Рекомендации дня"
+                        getString(R.string.recomendation)
                     }
                     recAdapter.updateFromStats(stats)
                 }
