@@ -53,7 +53,6 @@ class SettingsViewModel(private val db: AppDatabase) : ViewModel() {
         )
     }
 
-    // Все изменения напрямую в State
     fun onNameChanged(value: String) {
         _state.value = _state.value.copy(name = value)
     }
@@ -77,7 +76,6 @@ class SettingsViewModel(private val db: AppDatabase) : ViewModel() {
     fun hasChanges(): Boolean {
         val s = lastDbSettings
         val curr = _state.value
-        // Если нет ни старых, ни новых (т.е. всё по нулям) — false
         if (s == null && curr.name.isBlank() && curr.cupGoal == null && curr.monthlyCupGoal == null
             && curr.spendGoal == null && curr.monthlySpendGoal == null
         ) return false
@@ -112,7 +110,6 @@ class SettingsViewModel(private val db: AppDatabase) : ViewModel() {
             withContext(Dispatchers.IO) {
                 db.userSettingsDao().clearSettings()
             }
-            // После сброса чистый State, режим просмотра
             _state.value = SettingsViewState()
         }
     }

@@ -64,7 +64,6 @@ class MoodDetailsFragment : Fragment() {
                 }
                 val mood = state.mood
                 val coffee = state.coffee
-                // Обязательное наличие связанного кофе
                 if (mood == null || coffee == null) {
                     Toast.makeText(requireContext(), "Запись или связанный кофе не найдены", Toast.LENGTH_SHORT).show()
                     findNavController().popBackStack()
@@ -77,7 +76,6 @@ class MoodDetailsFragment : Fragment() {
                 binding.commentValue.text = mood.comment ?: getString(R.string.no_data)
                 binding.linkedCoffeeInfo.text = viewModel.getLinkedCoffeeInfo()
 
-                // Переход к деталям кофе
                 binding.linkedCoffeeContainer.setOnClickListener {
                     val action = MoodDetailsFragmentDirections.actionMoodDetailsToCoffeeDetails(coffee.id)
                     findNavController().navigate(action)

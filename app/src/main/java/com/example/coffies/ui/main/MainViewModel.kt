@@ -1,7 +1,6 @@
 package com.example.coffies.ui.main
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.coffies.database.AppDatabase
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +40,7 @@ class MainViewModel(private val db: AppDatabase) : ViewModel() {
                 recommendations = recommendations,
                 cupGoal = cupGoal,
                 spendGoal = spendGoal,
-                userName = userName // <-- сюда
+                userName = userName
             )
         }
     }

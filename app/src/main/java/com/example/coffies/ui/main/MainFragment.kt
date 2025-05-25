@@ -28,7 +28,6 @@ class MainFragment : Fragment() {
 
     private val colorRed by lazy { ContextCompat.getColor(requireContext(), R.color.red) }
     private val colorBlack by lazy { ContextCompat.getColor(requireContext(), R.color.black) }
-    private val colorGray by lazy { ContextCompat.getColor(requireContext(), R.color.gray) }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -52,7 +51,6 @@ class MainFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
                 viewModel.stats.collect { stats ->
-                    // Чашки кофе (оставляем как было)
                     binding.cupsText.text = when {
                         stats?.cupsCount != null && stats.cupGoal != null ->
                             getString(R.string.cups_count_with_goal, stats.cupsCount, stats.cupGoal)
@@ -63,14 +61,12 @@ class MainFragment : Fragment() {
                     val isCupExceeded = stats?.cupGoal != null && stats.cupsCount != null && stats.cupGoal > 0 && stats.cupsCount > stats.cupGoal
                     binding.cupsText.setTextColor(if (isCupExceeded) colorRed else colorBlack)
 
-                    // КОФЕИН — значение и лимит (всегда 400 мг)
                     binding.caffeineText.text = stats?.caffeine?.let { "$it мг" } ?: getString(R.string.no_data)
                     val isCaffeineExceeded = stats?.caffeine != null && stats.caffeine > 400
                     binding.caffeineText.setTextColor(if (isCaffeineExceeded) colorRed else colorBlack)
                     binding.caffeineLimitText.text = "/ 400 мг"
                     binding.caffeineLimitText.setTextColor(if (isCaffeineExceeded) colorRed else colorBlack)
 
-                    // НАСТРОЕНИЕ
                     if (stats?.avgMood != null && stats.avgMood > 0) {
                         binding.currentMoodIcon.setImageResource(moodLevelToDrawable(stats.avgMood))
                         binding.moodText.text = moodLevelToText(stats.avgMood)
@@ -84,7 +80,6 @@ class MainFragment : Fragment() {
                     binding.moodLimitText.text = "/ Отличное"
                     binding.moodLimitText.setTextColor(colorBlack)
 
-                    // ДЕНЬГИ — значение с ₽, лимит тоже
                     binding.spentText.text = stats?.totalSpent?.let { "%.2f ₽".format(it) } ?: getString(R.string.no_data)
                     val isSpendExceeded = stats?.spendGoal != null && stats.totalSpent != null && stats.totalSpent > stats.spendGoal
                     binding.spentText.setTextColor(if (isSpendExceeded) colorRed else colorBlack)

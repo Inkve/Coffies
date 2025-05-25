@@ -35,7 +35,6 @@ class MoodInputViewModel(private val db: AppDatabase) : ViewModel() {
                 relatedCoffeeTime = relatedCoffeeTime,
                 relatedCoffeeDate = relatedCoffeeDate,
                 momentType = momentType,
-                // Заполним дату и время, если есть
                 date = relatedCoffeeDate ?: "",
                 displayDate = relatedCoffeeDate?.split("-")?.reversed()?.joinToString(".") ?: "",
                 time = relatedCoffeeTime ?: ""
@@ -97,7 +96,6 @@ class MoodInputViewModel(private val db: AppDatabase) : ViewModel() {
                 displayDate = "",
                 time = ""
             )
-            // При выборе — ставим дату и время приема кофе
             val newDate = entry.date
             val newTime = entry.time
             st.copy(
@@ -124,7 +122,7 @@ class MoodInputViewModel(private val db: AppDatabase) : ViewModel() {
         _formState.update { it.copy(comment = text) }
     }
 
-    fun refreshCoffeeList() {
+    private fun refreshCoffeeList() {
         viewModelScope.launch {
             val usedBefore = db.coffeeMoodLinkDao().getCoffeeEntryIdsByType(MoodMomentType.BEFORE.dbValue)
             val usedAfter = db.coffeeMoodLinkDao().getCoffeeEntryIdsByType(MoodMomentType.AFTER.dbValue)
@@ -135,13 +133,12 @@ class MoodInputViewModel(private val db: AppDatabase) : ViewModel() {
                 MoodMomentType.AFTER -> coffeeList.filter { it.id !in usedAfter }
                 else -> coffeeList
             }
-            // Проверяем, остался ли выбранный relatedCoffeeId в новом списке
+
             val currentRelatedId = _formState.value.relatedCoffeeId
             val isRelatedValid = currentRelatedId != null && filtered.any { it.id == currentRelatedId }
             _formState.update {
                 it.copy(
                     coffeeList = filtered,
-                    // если связанный прием больше не валиден — сбросить его
                     relatedCoffeeId = if (isRelatedValid) currentRelatedId else null,
                     relatedCoffeeTime = if (isRelatedValid) it.relatedCoffeeTime else null,
                     relatedCoffeeDate = if (isRelatedValid) it.relatedCoffeeDate else null
@@ -180,7 +177,6 @@ class MoodInputViewModel(private val db: AppDatabase) : ViewModel() {
                 timeError = "Выберите время"
                 valid = false
             }
-            // Проверка на валидность времени по связи
             if (st.momentType != null && st.relatedCoffeeTime != null && st.relatedCoffeeDate != null) {
                 val cmp = "${st.date}T${st.time}".compareTo("${st.relatedCoffeeDate}T${st.relatedCoffeeTime}")
                 if (st.momentType == MoodMomentType.BEFORE && cmp > 0) {
@@ -192,7 +188,7 @@ class MoodInputViewModel(private val db: AppDatabase) : ViewModel() {
                     valid = false
                 }
             }
-            // Будущие даты блокируем
+
             val now = java.time.LocalDateTime.now()
             val inputDT = try { java.time.LocalDateTime.parse("${st.date}T${st.time}") } catch (_: Exception) { null }
             if (inputDT != null && inputDT > now) {
@@ -231,7 +227,7 @@ class MoodInputViewModel(private val db: AppDatabase) : ViewModel() {
                 _formState.update { it.copy(success = true) }
                 resetForm()
             } catch (e: Exception) {
-                // обработка ошибок по желанию
+                // handle error
             }
         }
     }

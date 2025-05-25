@@ -46,7 +46,6 @@ class SettingsFragment : Fragment() {
                 return when (menuItem.itemId) {
                     R.id.action_edit -> {
                         if (viewModel.state.value.isEditing) {
-                            // Если редактируем, действуем как при Back
                             if (viewModel.hasChanges()) {
                                 if (!isDialogShown) {
                                     isDialogShown = true
@@ -70,7 +69,6 @@ class SettingsFragment : Fragment() {
             }
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        // EditText слушатели
         binding.nameEdit.addTextChangedListener {
             if (viewModel.state.value.isEditing && !isUpdatingEditText) {
                 viewModel.onNameChanged(it?.toString().orEmpty())
@@ -114,13 +112,11 @@ class SettingsFragment : Fragment() {
                 override fun handleOnBackPressed() {
                     if (viewModel.state.value.isEditing) {
                         if (viewModel.hasChanges()) {
-                            // Если были изменения — спрашиваем
                             if (!isDialogShown) {
                                 isDialogShown = true
                                 showUnsavedChangesDialog()
                             }
                         } else {
-                            // Если изменений не было — просто выйти в просмотр
                             viewModel.exitEditMode()
                             hideKeyboard()
                         }
@@ -183,7 +179,6 @@ class SettingsFragment : Fragment() {
                 binding.monthlySpendGoalEdit.setText(state.monthlySpendGoal?.let { formatMoney(it) } ?: "")
             isUpdatingEditText = false
         }
-        // Текстовые значения всегда обновляем (можно не проверять на отличие)
         binding.nameText.text = if (state.name.isNotBlank()) state.name else "Не задано"
         binding.cupGoalText.text = state.cupGoal?.toString() ?: "Не задано"
         binding.monthlyCupGoalText.text = state.monthlyCupGoal?.toString() ?: "Не задано"
@@ -194,7 +189,6 @@ class SettingsFragment : Fragment() {
     }
 
     private fun setEditMode(isEditing: Boolean) {
-        // TextView — просмотр, EditText — редактирование
         binding.nameText.visibility = if (isEditing) View.GONE else View.VISIBLE
         binding.nameEdit.visibility = if (isEditing) View.VISIBLE else View.GONE
 

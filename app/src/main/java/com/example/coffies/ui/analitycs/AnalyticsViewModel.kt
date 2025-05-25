@@ -20,7 +20,7 @@ class AnalyticsViewModel(
         loadAnalytics()
     }
 
-    fun loadAnalytics() {
+    private fun loadAnalytics() {
         viewModelScope.launch {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
             val today = LocalDate.now()
@@ -31,7 +31,6 @@ class AnalyticsViewModel(
             val moods = db.moodEntryDao().getAllBetweenDates(dayStrings.first(), dayStrings.last())
             val userSettings = db.userSettingsDao().getSettingsOnce()
 
-            // По дням
             val caffeineByDay = dayStrings.map { date ->
                 val sumCaffeine = entries.filter { it.date == date }.sumOf { it.caffeine_mg ?: 0.0 }
                 date to sumCaffeine
@@ -50,26 +49,22 @@ class AnalyticsViewModel(
                 date to avgMood
             }
 
-            // Кофеин
             val caffeineAvgs = caffeineByDay.map { it.second }.filter { it > 0 }
             val caffeineAvgNum = if (caffeineAvgs.isNotEmpty()) caffeineAvgs.average() else 0.0
             val caffeineAvg = if (caffeineAvgNum > 0) "%.0f мг".format(caffeineAvgNum) else "-"
             val isCaffeineExceeded = caffeineAvgNum > 400
-            val caffeineGoal = "400 мг" // Статичная цель
+            val caffeineGoal = "400 мг"
 
-            // Чашки
             val cupsSumNum = cupsByDay.map { it.second }.filter { it > 0 }.sum()
             val cupsSum = if (cupsSumNum > 0) "%.0f".format(cupsSumNum) else "-"
             val cupsGoal = userSettings?.monthly_cup_goal?.takeIf { it > 0 }?.toString()
             val isCupsExceeded = userSettings?.monthly_cup_goal?.let { it > 0 && cupsSumNum > it } ?: false
 
-            // Деньги
             val moneySumNum = moneyByDay.map { it.second }.filter { it > 0 }.sum()
             val moneySum = if (moneySumNum > 0) "%.2f ₽".format(moneySumNum) else "-"
             val moneyGoal = userSettings?.monthly_spend_goal?.takeIf { it > 0f }?.let { "%.2f ₽".format(it) }
             val isMoneyExceeded = userSettings?.monthly_spend_goal?.let { it > 0f && moneySumNum > it } ?: false
-
-            // Настроение
+            
             val moodAvgs = moodByDay.map { it.second }.filter { it > 0 }
             val moodAvg = if (moodAvgs.isNotEmpty()) ceil(moodAvgs.average()).toInt() else 0
 

@@ -42,13 +42,11 @@ class AnalyticsFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.state.collect { state ->
-                // Легенды
                 binding.caffeineTitle.text = getString(R.string.caffeine_legend)
                 binding.cupsTitle.text = getString(R.string.cups_legend)
                 binding.moneyTitle.text = getString(R.string.money_legend)
                 binding.moodTitle.text = getString(R.string.mood_legend)
 
-                // КОФЕИН
                 setupLineChart(
                     chart = binding.caffeineChart,
                     points = state.caffeinePoints,
@@ -69,7 +67,6 @@ class AnalyticsFragment : Fragment() {
                     else ContextCompat.getColor(requireContext(), R.color.black)
                 )
 
-                // ЧАШКИ
                 setupLineChart(
                     chart = binding.cupsChart,
                     points = state.cupsPoints,
@@ -90,7 +87,6 @@ class AnalyticsFragment : Fragment() {
                     else ContextCompat.getColor(requireContext(), R.color.black)
                 )
 
-                // ДЕНЬГИ
                 setupLineChart(
                     chart = binding.moneyChart,
                     points = state.moneyPoints,
@@ -111,7 +107,6 @@ class AnalyticsFragment : Fragment() {
                     else ContextCompat.getColor(requireContext(), R.color.black)
                 )
 
-                // НАСТРОЕНИЕ
                 setupLineChart(
                     chart = binding.moodChart,
                     points = state.moodPoints,
@@ -159,7 +154,6 @@ class AnalyticsFragment : Fragment() {
         chart.setExtraOffsets(0f, 0f, 0f, 20f)
         chart.axisLeft.setDrawGridLines(true)
 
-        // Отключить масштабирование и прокрутку:
         chart.setScaleEnabled(false)
         chart.isDoubleTapToZoomEnabled = false
         chart.isDragEnabled = false
@@ -182,7 +176,6 @@ class AnalyticsFragment : Fragment() {
             chart.axisLeft.valueFormatter = DefaultYFormatter()
         }
 
-        // Настраиваем маркер для отображения данных по тапу
         val markerView = ChartMarkerView(
             requireContext(),
             points.map { it.first },

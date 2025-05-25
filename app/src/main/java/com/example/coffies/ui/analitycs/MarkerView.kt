@@ -9,8 +9,8 @@ import com.github.mikephil.charting.highlight.Highlight
 
 class ChartMarkerView(
     context: Context,
-    private val xLabels: List<String>, // Передавай список дат сюда!
-    private val yFormatter: ((Float) -> String)? = null // Если нужен особый формат значения
+    private val xLabels: List<String>,
+    private val yFormatter: ((Float) -> String)? = null
 ) : MarkerView(context, R.layout.chart_marker_view) {
 
     private val textView: TextView = findViewById(R.id.marker_text)
@@ -19,7 +19,6 @@ class ChartMarkerView(
         if (e != null) {
             val xIndex = e.x.toInt()
             val date = if (xIndex in xLabels.indices) {
-                // Преобразуем yyyy-MM-dd -> dd.MM
                 val str = xLabels[xIndex]
                 if (str.length == 10) "${str.substring(8,10)}.${str.substring(5,7)}" else str
             } else {

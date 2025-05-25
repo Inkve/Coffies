@@ -53,7 +53,6 @@ class MoodDetailsViewModel(
             val st = _state.value
             val mood = st.mood ?: return@launch
             db.moodEntryDao().delete(mood)
-            // Линки удаляются каскадно
             onDeleted()
         }
     }
@@ -75,7 +74,6 @@ class MoodDetailsViewModel(
             "after" -> "после"
             else -> ""
         }
-        // Можно добавить объем, кофеин и пр. если нужно
         return "$typeName • $volume мл • $time $date • $moment"
     }
 

@@ -39,7 +39,7 @@ class CoffeeInputViewModel(
             date = dispDate,
             dateIso = isoDate,
             time = time,
-            coffeeTypeError = null // сбрасываем ошибку выбора
+            coffeeTypeError = null
         )
     }
 

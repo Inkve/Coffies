@@ -58,7 +58,6 @@ class CoffeeInputFragment : Fragment() {
             binding.coffeeTypeSpinner.setAdapter(spinnerAdapter)
         }
 
-        // Обработка кликов: поле, стрелка, сам спиннер
         fun handleCoffeeTypeClick() {
             if (coffeeTypes.isEmpty()) {
                 Toast.makeText(

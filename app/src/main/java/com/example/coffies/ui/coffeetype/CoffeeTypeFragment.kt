@@ -51,7 +51,6 @@ class CoffeeTypeFragment : Fragment() {
                 binding.defaultCaffeineInput.error = state.caffeineError
 
                 if (state.success) {
-                    // Очистка полей, скрытие клавиатуры и тост
                     binding.nameInput.text?.clear()
                     binding.defaultVolumeInput.text?.clear()
                     binding.defaultCaffeineInput.text?.clear()

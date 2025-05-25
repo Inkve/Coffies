@@ -169,7 +169,6 @@ class HistoryFragment : Fragment() {
     }
 
     private fun observeDeleteResult() {
-        // Старый обработчик для удаления кофе
         parentFragmentManager.setFragmentResultListener(
             "COFFEE_DELETED",
             viewLifecycleOwner
@@ -178,7 +177,6 @@ class HistoryFragment : Fragment() {
             viewModel.forceReload()
             Toast.makeText(requireContext(), "Запись удалена", Toast.LENGTH_SHORT).show()
         }
-        // Новый обработчик для удаления настроения
         parentFragmentManager.setFragmentResultListener(
             "MOOD_DELETED",
             viewLifecycleOwner

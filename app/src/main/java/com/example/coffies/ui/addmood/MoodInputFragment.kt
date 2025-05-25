@@ -37,15 +37,12 @@ class MoodInputFragment : Fragment() {
         prefillFromArguments()
         observeState()
 
-        // Эмоции
         listOf(binding.mood1, binding.mood2, binding.mood3, binding.mood4, binding.mood5).forEachIndexed { idx, iv ->
             iv.setOnClickListener { viewModel.onMoodSelected(idx + 1) }
         }
 
-        // По умолчанию выбран "До"
         binding.momentRadioGroup.check(R.id.moment_before)
 
-        // Момент
         binding.momentRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             val moment = when (checkedId) {
                 R.id.moment_before -> MoodMomentType.BEFORE
@@ -55,25 +52,20 @@ class MoodInputFragment : Fragment() {
             viewModel.onMomentSelected(moment)
         }
 
-        // Связанный прием кофе (стрелка уже в layout через endIconMode)
         binding.relatedEntryInputLayout.setEndIconOnClickListener { showCoffeeDialog() }
         binding.relatedEntrySpinner.setOnClickListener { showCoffeeDialog() }
 
-        // Для исчезновения подсказки после выбора
         binding.relatedEntrySpinner.setOnFocusChangeListener { _, hasFocus ->
             if (hasFocus && binding.relatedEntrySpinner.text.isEmpty()) {
                 binding.relatedEntrySpinner.setText("")
             }
         }
 
-        // Дата/время
         binding.dateInput.setOnClickListener { showDatePicker() }
         binding.timeInput.setOnClickListener { showTimePicker() }
 
-        // Комментарий
         binding.commentInput.addTextChangedListener { viewModel.onCommentChanged(it?.toString() ?: "") }
 
-        // Сохранить
         binding.saveButton.setOnClickListener { viewModel.submit() }
     }
 
@@ -97,12 +89,10 @@ class MoodInputFragment : Fragment() {
     private fun observeState() {
         lifecycleScope.launch {
             viewModel.formState.collect { st ->
-                // Эмоции
                 listOf(binding.mood1, binding.mood2, binding.mood3, binding.mood4, binding.mood5).forEachIndexed { idx, iv ->
                     iv.isSelected = idx + 1 == st.moodLevel
                     iv.background = if (iv.isSelected) ContextCompat.getDrawable(requireContext(), R.drawable.mood_selector_background) else null
                 }
-                // Момент
                 binding.momentRadioGroup.check(
                     when (st.momentType) {
                         MoodMomentType.BEFORE -> R.id.moment_before
@@ -110,7 +100,6 @@ class MoodInputFragment : Fragment() {
                         else -> -1
                     }
                 )
-                // Связанный приём кофе — подсказка исчезает после выбора, появляется после сброса
                 val relatedText = st.relatedCoffeeId?.let { id ->
                     st.coffeeList.firstOrNull { it.id == id }?.let { entry ->
                         val typeName = st.coffeeTypeNameMap[entry.coffee_type_id] ?: "Тип ${entry.coffee_type_id}"
@@ -126,14 +115,11 @@ class MoodInputFragment : Fragment() {
                 if (relatedText.isNotEmpty() && binding.relatedEntrySpinner.text.toString() != relatedText) {
                     binding.relatedEntrySpinner.setText(relatedText, false)
                 }
-                // Подсказку "Выберите приём кофе" показываем только если поле пустое и ничего не выбрано
                 if (relatedText.isEmpty()) {
                     binding.relatedEntrySpinner.hint = "Выберите приём кофе"
                 } else {
                     binding.relatedEntrySpinner.hint = ""
                 }
-
-                // Дата/время/комментарий
                 binding.dateInput.setText(st.displayDate)
                 binding.timeInput.setText(st.time)
                 if (binding.commentInput.text.toString() != st.comment) {
@@ -141,7 +127,6 @@ class MoodInputFragment : Fragment() {
                     binding.commentInput.setSelection(st.comment.length)
                 }
 
-                // Ошибки
                 binding.moodError.text = st.moodError
                 binding.moodError.visibility = if (st.moodError != null) View.VISIBLE else View.GONE
                 binding.momentError.text = st.momentError
@@ -149,12 +134,10 @@ class MoodInputFragment : Fragment() {
                 binding.relatedCoffeeError.text = st.relatedCoffeeError
                 binding.relatedCoffeeError.visibility = if (st.relatedCoffeeError != null) View.VISIBLE else View.GONE
 
-                // Общая ошибка по дате/времени
                 val datetimeError = st.dateError ?: st.timeError
                 binding.datetimeError.text = datetimeError
                 binding.datetimeError.visibility = if (datetimeError != null) View.VISIBLE else View.GONE
 
-                // После сохранения — очистка формы и выпадающего текста
                 if (st.success) {
                     Toast.makeText(requireContext(), "Настроение успешно сохранено", Toast.LENGTH_SHORT).show()
                     binding.relatedEntrySpinner.setText("", false)

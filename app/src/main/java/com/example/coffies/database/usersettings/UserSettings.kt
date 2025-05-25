@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "user_settings")
 data class UserSettings(
-    @PrimaryKey val id: Int = 1, // всегда одна запись, id = 1
+    @PrimaryKey val id: Int = 1,
     val name: String? = null,
     val daily_cup_goal: Int? = null,
     val monthly_cup_goal: Int? = null,

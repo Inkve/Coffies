@@ -10,7 +10,6 @@ import com.example.coffies.R
 class RecommendationAdapter : RecyclerView.Adapter<RecommendationAdapter.RecViewHolder>() {
     private val data = mutableListOf<String>()
 
-    // Передаём сюда все необходимые параметры для рекомендаций
     fun updateFromStats(stats: MainScreenStats?) {
         data.clear()
         if (stats != null) {
@@ -19,11 +18,9 @@ class RecommendationAdapter : RecyclerView.Adapter<RecommendationAdapter.RecView
         notifyDataSetChanged()
     }
 
-    // Генерация рекомендаций (максимум 3)
     private fun generateRecommendations(stats: MainScreenStats): List<String> {
         val recs = mutableListOf<String>()
 
-        // 1. Кофеин
         if (stats.caffeine != null) {
             when {
                 stats.caffeine > 400 -> recs += "☕ Превышен дневной лимит кофеина. Рекомендуется снизить потребление."
@@ -32,7 +29,6 @@ class RecommendationAdapter : RecyclerView.Adapter<RecommendationAdapter.RecView
             }
         }
 
-        // 2. Деньги
         if (stats.spendGoal != null && stats.totalSpent != null) {
             when {
                 stats.totalSpent > stats.spendGoal -> recs += "💸 Расходы на кофе превысили цель. Попробуйте проанализировать траты."
@@ -41,7 +37,6 @@ class RecommendationAdapter : RecyclerView.Adapter<RecommendationAdapter.RecView
             }
         }
 
-        // 3. Настроение
         if (stats.avgMood != null) {
             when {
                 stats.avgMood <= 2 -> recs += "😊 Постарайтесь больше отдыхать. Хорошее настроение — залог продуктивности!"
@@ -51,13 +46,11 @@ class RecommendationAdapter : RecyclerView.Adapter<RecommendationAdapter.RecView
             }
         }
 
-        // 4. Если рекомендаций нет — универсальные
         if (recs.isEmpty()) {
             recs += "💡 Не забывайте пить воду и делать небольшие перерывы!"
             recs += "❤ Всё в норме! Продолжайте в том же духе."
         }
 
-        // Оставляем только первые 3
         return recs.distinct().take(3)
     }
 
